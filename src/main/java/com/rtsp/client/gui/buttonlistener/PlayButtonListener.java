@@ -1,10 +1,6 @@
 package com.rtsp.client.gui.buttonlistener;
 
-import com.fsm.module.StateHandler;
-import com.rtsp.client.fsm.RtspEvent;
-import com.rtsp.client.fsm.RtspState;
 import com.rtsp.client.gui.GuiManager;
-import com.rtsp.client.gui.component.panel.MediaPanel;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspNettyChannel;
@@ -14,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Random;
 
 public class PlayButtonListener implements ActionListener {
 
@@ -35,17 +32,10 @@ public class PlayButtonListener implements ActionListener {
 
         RtspNettyChannel rtspNettyChannel = NettyChannelManager.getInstance().getRtspChannel(rtspUnit.getRtspUnitId());
         if (rtspNettyChannel != null) {
-            rtspNettyChannel.sendPlay(rtspUnit,
-                    rtspUnit.getStartTime(),
-                    rtspUnit.getEndTime()
-            );
-        } else {
-            logger.warn("({}) Rtsp Channel is closed. Fail to process PLAY.", rtspUnit.getRtspUnitId());
-            StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
-            rtspStateHandler.fire(
-                    RtspEvent.IDLE,
-                    rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
-            );
+            Random random = new Random();
+            long sessionId = random.nextInt(RtspUnit.MAX_SESSION_ID);
+            rtspUnit.setSessionId(sessionId);
+            rtspNettyChannel.sendOptions(rtspUnit);
         }
     }
 }

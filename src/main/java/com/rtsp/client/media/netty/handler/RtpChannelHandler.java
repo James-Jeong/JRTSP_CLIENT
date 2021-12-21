@@ -1,14 +1,8 @@
 package com.rtsp.client.media.netty.handler;
 
-import com.fsm.module.StateHandler;
-import com.rtsp.client.fsm.RtspEvent;
-import com.rtsp.client.fsm.RtspState;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.protocol.RtpPacket;
-import io.lindstrom.m3u8.model.MediaPlaylist;
-import io.lindstrom.m3u8.model.MediaSegment;
-import io.lindstrom.m3u8.parser.MediaPlaylistParser;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -16,10 +10,7 @@ import io.netty.channel.socket.DatagramPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.util.List;
 
 public class RtpChannelHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 

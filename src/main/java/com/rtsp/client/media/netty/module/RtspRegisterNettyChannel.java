@@ -3,6 +3,7 @@ package com.rtsp.client.media.netty.module;
 import com.rtsp.client.config.ConfigManager;
 import com.rtsp.client.media.netty.handler.RtspRegisterChannelHandler;
 import com.rtsp.client.protocol.register.RegisterRtspUnitReq;
+import com.rtsp.client.protocol.register.UnRegisterRtspUnitReq;
 import com.rtsp.client.protocol.register.base.URtspMessageType;
 import com.rtsp.client.service.AppInstance;
 import io.netty.bootstrap.Bootstrap;
@@ -23,7 +24,6 @@ public class RtspRegisterNettyChannel {
 
     private static final Logger log = LoggerFactory.getLogger(RtspRegisterNettyChannel.class);
 
-    private final String rtspUnitId;
     private final String ip;
     private final int port;
 
@@ -35,8 +35,7 @@ public class RtspRegisterNettyChannel {
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public RtspRegisterNettyChannel(String rtspUnitId, String ip, int port) {
-        this.rtspUnitId = rtspUnitId;
+    public RtspRegisterNettyChannel(String ip, int port) {
         this.ip = ip;
         this.port = port;
     }
@@ -111,20 +110,20 @@ public class RtspRegisterNettyChannel {
         try {
             ChannelFuture channelFuture = bootstrap.connect(address, targetPort).sync();
             if (channelFuture == null) {
-                log.warn("[{}] Fail to start the rtsp register send channelFuture. (ip={}, port={})", rtspUnitId, targetIp, targetPort);
+                log.warn("Fail to start the rtsp register send channelFuture. (ip={}, port={})", targetIp, targetPort);
                 return;
             }
 
             sendChannel = channelFuture.channel();
-            log.debug("[{}] Success to start the rtsp register send channel. (ip={}, port={})", rtspUnitId, targetIp, targetPort);
+            log.debug("Success to start the rtsp register send channel. (ip={}, port={})", targetIp, targetPort);
         } catch (Exception e) {
-            log.warn("[{}] Fail to start the rtsp register send channel. (ip={}, port={}) {}", rtspUnitId, targetIp, targetPort, e);
+            log.warn("Fail to start the rtsp register send channel. (ip={}, port={}) {}", targetIp, targetPort, e);
         }
     }
 
     public void stop() {
         if (listenChannel == null) {
-            log.warn("[{}] Fail to stop the rtsp register listen channel. (ip={}, port={})", rtspUnitId, ip, port);
+            log.warn("Fail to stop the rtsp register listen channel. (ip={}, port={})", ip, port);
             return;
         }
 
@@ -132,7 +131,7 @@ public class RtspRegisterNettyChannel {
         listenChannel = null;
 
         if (sendChannel == null) {
-            log.warn("[{}] Fail to stop the rtsp register send channel. (ip={}, port={})", rtspUnitId, ip, port);
+            log.warn("Fail to stop the rtsp register send channel. (ip={}, port={})", ip, port);
             return;
         }
 
@@ -140,12 +139,12 @@ public class RtspRegisterNettyChannel {
         sendChannel = null;
 
         seqNum = 1;
-        log.debug("[{}] Success to stop the rtsp register channels. (ip={}, port={})", rtspUnitId, ip, port);
+        log.debug("Success to stop the rtsp register channels. (ip={}, port={})", ip, port);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public void sendRegister(String targetIp, int targetPort, String nonce) {
+    public void sendRegister(String rtspUnitId, String targetIp, int targetPort, String nonce) {
         if (sendChannel == null) {
             return;
         }
@@ -172,11 +171,30 @@ public class RtspRegisterNettyChannel {
         log.debug("[<] {} ({})", registerRtspUnitReq, registerRtspUnitReq.getByteData().length);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
+    public void sendUnRegister(String rtspUnitId, String targetIp, int targetPort) {
+        if (sendChannel == null) {
+            return;
+        }
 
-    public String getRtspUnitId() {
-        return rtspUnitId;
+        UnRegisterRtspUnitReq unRegisterRtspUnitReq = new UnRegisterRtspUnitReq(
+                AppInstance.getInstance().getConfigManager().getMagicCookie(),
+                URtspMessageType.UNREGISTER, seqNum, System.currentTimeMillis(),
+                rtspUnitId, (short) port
+        );
+
+        InetSocketAddress inetSocketAddress = new InetSocketAddress(targetIp, targetPort);
+        sendChannel.writeAndFlush(
+                new DatagramPacket(
+                        Unpooled.copiedBuffer(unRegisterRtspUnitReq.getByteData()),
+                        inetSocketAddress
+                )
+        );
+
+        seqNum++;
+        log.debug("[<] {} ({})", unRegisterRtspUnitReq, unRegisterRtspUnitReq.getByteData().length);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     public String getIp() {
         return ip;

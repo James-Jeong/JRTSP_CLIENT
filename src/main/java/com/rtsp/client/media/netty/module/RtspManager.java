@@ -1,5 +1,7 @@
 package com.rtsp.client.media.netty.module;
 
+import com.fsm.module.StateHandler;
+import com.rtsp.client.fsm.RtspEvent;
 import com.rtsp.client.fsm.RtspState;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
@@ -30,7 +32,7 @@ public class RtspManager {
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public void openRtspUnit(String ip, int port) {
+    public RtspUnit openRtspUnit(String ip, int port) {
         if (rtspUnit == null) {
             rtspUnit = new RtspUnit(ip, port);
             rtspUnit.getStateManager().addStateUnit(
@@ -40,15 +42,33 @@ public class RtspManager {
                     null
             );
         }
+
+        return rtspUnit;
     }
 
     public void closeRtspUnit() {
         if (rtspUnit != null) {
-            NettyChannelManager.getInstance().deleteRtspChannel(
-                    rtspUnit.getRtspChannel().getListenIp()
-                            + "_" +
-                            rtspUnit.getRtspChannel().getListenPort()
+            String rtspUnitId = rtspUnit.getRtspUnitId();
+            NettyChannelManager.getInstance().deleteRtspChannel(rtspUnitId);
+            clearRtspUnit();
+
+            rtspUnit = null;
+        }
+    }
+
+    public void clearRtspUnit() {
+        if (rtspUnit != null) {
+            String rtspUnitId = rtspUnit.getRtspUnitId();
+            NettyChannelManager.getInstance().deleteRtpChannel(rtspUnitId);
+            NettyChannelManager.getInstance().deleteRtcpChannel(rtspUnitId);
+
+            StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
+            rtspStateHandler.fire(
+                    RtspEvent.IDLE,
+                    rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
             );
+
+            rtspUnit.clear();
         }
     }
 

@@ -1,10 +1,8 @@
 package com.rtsp.client.media.sdp.base;
 
 import com.rtsp.client.media.sdp.base.attribute.RtpAttribute;
-import com.rtsp.client.media.sdp.base.attribute.base.FmtpAttributeFactory;
 import com.rtsp.client.media.sdp.base.attribute.base.RtpMapAttributeFactory;
 import com.rtsp.client.media.sdp.base.field.ConnectionField;
-import com.rtsp.client.media.sdp.base.field.OriginField;
 import com.rtsp.client.media.sdp.base.media.MediaDescriptionFactory;
 import com.rtsp.client.media.sdp.base.media.MediaFactory;
 import com.rtsp.client.media.sdp.base.session.SessionDescriptionFactory;
@@ -12,7 +10,6 @@ import com.rtsp.client.media.sdp.base.time.TimeDescriptionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

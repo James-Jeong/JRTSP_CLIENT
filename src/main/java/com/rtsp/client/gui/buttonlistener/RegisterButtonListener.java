@@ -1,12 +1,10 @@
 package com.rtsp.client.gui.buttonlistener;
 
 import com.rtsp.client.config.ConfigManager;
-import com.rtsp.client.gui.GuiManager;
-import com.rtsp.client.gui.component.panel.MediaPanel;
 import com.rtsp.client.media.netty.NettyChannelManager;
+import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspRegisterNettyChannel;
-import com.rtsp.client.protocol.register.RegisterRtspUnitReq;
-import com.rtsp.client.protocol.register.base.URtspMessageType;
+import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.service.AppInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,17 +26,24 @@ public class RegisterButtonListener implements ActionListener {
 
         log.debug("{}", registerRtspUnitReq);*/
 
-        // Add register channel
-        NettyChannelManager.getInstance().addRegisterChannel();
-
         // Send Register
         RtspRegisterNettyChannel rtspRegisterNettyChannel = NettyChannelManager.getInstance().getRegisterChannel();
         if (rtspRegisterNettyChannel == null) {
             return;
         }
 
+        RtspUnit rtspUnit = RtspManager.getInstance().getRtspUnit();
+        if (rtspUnit == null) {
+            ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+            rtspUnit = RtspManager.getInstance().openRtspUnit(
+                    configManager.getTargetRtspIp(),
+                    configManager.getTargetRtspPort()
+            );
+        }
+
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
         rtspRegisterNettyChannel.sendRegister(
+                rtspUnit.getRtspUnitId(),
                 configManager.getTargetIp(),
                 configManager.getTargetPort(),
                 null

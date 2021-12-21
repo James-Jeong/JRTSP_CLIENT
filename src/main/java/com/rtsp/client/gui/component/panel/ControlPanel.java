@@ -56,10 +56,7 @@ public class ControlPanel extends JPanel {
         pauseButton.setEnabled(false);
         stopButton.setEnabled(false);
         finishButton.setEnabled(true);
-
-        // TODO 등록 해제 기능은 아직 미지원
-        //unregisterButton.setEnabled(true);
-        unregisterButton.setEnabled(false);
+        unregisterButton.setEnabled(true);
     }
 
     public void applyPlayButtonStatus() {
@@ -68,9 +65,6 @@ public class ControlPanel extends JPanel {
         pauseButton.setEnabled(true);
         stopButton.setEnabled(true);
         finishButton.setEnabled(false);
-
-        // TODO 등록 해제 기능은 아직 미지원
-        //unregisterButton.setEnabled(true);
         unregisterButton.setEnabled(false);
     }
 
@@ -80,9 +74,15 @@ public class ControlPanel extends JPanel {
         pauseButton.setEnabled(false);
         stopButton.setEnabled(true);
         finishButton.setEnabled(false);
+        unregisterButton.setEnabled(true);
+    }
 
-        // TODO 등록 해제 기능은 아직 미지원
-        //unregisterButton.setEnabled(true);
-        unregisterButton.setEnabled(false);
+    public void applyStopButtonStatus() {
+        registerButton.setEnabled(false);
+        playButton.setEnabled(true);
+        pauseButton.setEnabled(false);
+        stopButton.setEnabled(false);
+        finishButton.setEnabled(false);
+        unregisterButton.setEnabled(true);
     }
 }

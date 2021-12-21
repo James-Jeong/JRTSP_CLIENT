@@ -1,7 +1,6 @@
 package com.rtsp.client.service;
 
-import com.rtsp.client.config.ConfigManager;
-import com.rtsp.client.media.netty.module.RtspManager;
+import com.rtsp.client.media.netty.NettyChannelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,14 +35,14 @@ public class ServiceManager {
     private void start() {
         logger.debug("| All services are opened.");
 
-        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-        RtspManager.getInstance().openRtspUnit(
-                configManager.getTargetRtspIp(),
-                configManager.getTargetRtspPort()
-        );
+        // Add register channel
+        NettyChannelManager.getInstance().addRegisterChannel();
     }
 
     public void stop() {
+        // Remove register channel
+        NettyChannelManager.getInstance().removeRegisterChannel();
+
         isQuit = true;
         logger.debug("| All services are closed.");
     }

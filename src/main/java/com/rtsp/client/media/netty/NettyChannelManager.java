@@ -1,8 +1,10 @@
 package com.rtsp.client.media.netty;
 
 import com.rtsp.client.config.ConfigManager;
-import com.rtsp.client.media.netty.module.*;
-import com.rtsp.client.media.netty.module.base.RtspUnit;
+import com.rtsp.client.media.netty.module.RtcpNettyChannel;
+import com.rtsp.client.media.netty.module.RtpNettyChannel;
+import com.rtsp.client.media.netty.module.RtspNettyChannel;
+import com.rtsp.client.media.netty.module.RtspRegisterNettyChannel;
 import com.rtsp.client.service.AppInstance;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
@@ -45,27 +47,18 @@ public class NettyChannelManager {
     ////////////////////////////////////////////////////////////////////////////////
 
     // Register 버튼 클릭 시 호출
-    public boolean addRegisterChannel() {
+    public void addRegisterChannel() {
         if (rtspRegisterNettyChannel != null) {
-            return false;
-        }
-
-        RtspUnit rtspUnit = RtspManager.getInstance().getRtspUnit();
-        if (rtspUnit == null) {
-            log.warn("NettyChannelManager > RtspUnit is null... Fail to add register channel.");
-            return false;
+            return;
         }
 
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
         rtspRegisterNettyChannel = new RtspRegisterNettyChannel(
-                rtspUnit.getRtspUnitId(),
                 configManager.getLocalListenIp(),
                 configManager.getLocalListenPort()
         );
         rtspRegisterNettyChannel.run();
         rtspRegisterNettyChannel.connect(configManager.getTargetIp(), configManager.getTargetPort());
-
-        return true;
     }
 
     // 프로그램 종료 시 호출

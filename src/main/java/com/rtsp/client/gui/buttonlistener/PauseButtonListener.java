@@ -1,7 +1,6 @@
 package com.rtsp.client.gui.buttonlistener;
 
 import com.rtsp.client.gui.GuiManager;
-import com.rtsp.client.gui.component.panel.MediaPanel;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspNettyChannel;
