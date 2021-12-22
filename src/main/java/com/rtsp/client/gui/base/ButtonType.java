@@ -8,4 +8,6 @@ public class ButtonType {
     public static final String STOP = "STOP";
     public static final String UNREGISTER = "UNREGISTER";
     public static final String FINISH = "FINISH";
+    public static final String UPLOAD = "UPLOAD";
+    public static final String CLEAR = "CLEAR";
 }

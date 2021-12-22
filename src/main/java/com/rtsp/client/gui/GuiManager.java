@@ -12,6 +12,9 @@ public class GuiManager {
     private final ControlPanel controlPanel;
 
     private ClientFrame clientFrame;
+
+    private boolean isUploaded = false;
+
     ////////////////////////////////////////////////////////////////////////////////
 
     public GuiManager() {
@@ -25,6 +28,14 @@ public class GuiManager {
         }
 
         return guiManager;
+    }
+
+    public boolean isUploaded() {
+        return isUploaded;
+    }
+
+    public void setUploaded(boolean uploaded) {
+        isUploaded = uploaded;
     }
 
     // TODO

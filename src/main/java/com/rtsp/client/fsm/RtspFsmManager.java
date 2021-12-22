@@ -37,10 +37,19 @@ public class RtspFsmManager {
         StateHandler rtspStateHandler = stateManager.getStateHandler(RtspState.NAME);
         //
 
+        // REGISTER
+        rtspStateHandler.addState(
+                RtspEvent.REGISTER,
+                RtspState.IDLE, RtspState.REGISTER,
+                null,
+                null,
+                null, 0, 0
+        );
+
         // OPTIONS
         rtspStateHandler.addState(
                 RtspEvent.OPTIONS,
-                RtspState.IDLE, RtspState.OPTIONS,
+                RtspState.REGISTER, RtspState.OPTIONS,
                 null,
                 null,
                 null, 0, 0

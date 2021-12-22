@@ -8,6 +8,7 @@ import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspNettyChannel;
 import com.rtsp.client.media.sdp.SdpParser;
 import com.rtsp.client.media.sdp.base.Sdp;
+import com.rtsp.client.service.base.ConcurrentCyclicFIFO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,10 @@ public class RtspUnit {
     private Double startTime = 0.000;
     private Double endTime = 0.000;
 
+    private boolean isPaused = false;
+
+    private final ConcurrentCyclicFIFO<byte[]> readBuffer = new ConcurrentCyclicFIFO<>();
+
     ////////////////////////////////////////////////////////////////////////////////
 
     public RtspUnit(String targetIp, int targetPort) {
@@ -65,6 +70,14 @@ public class RtspUnit {
     }
 
     ////////////////////////////////////////////////////////////////////////////////
+
+    public boolean isPaused() {
+        return isPaused;
+    }
+
+    public void setPaused(boolean paused) {
+        isPaused = paused;
+    }
 
     public Double getStartTime() {
         return startTime;
@@ -179,6 +192,15 @@ public class RtspUnit {
         sdp = null;
         startTime = 0.000;
         endTime = 0.000;
+        isPaused = false;
+    }
+
+    public void offer(byte[] data) {
+        readBuffer.offer(data);
+    }
+
+    public byte[] poll() {
+        return readBuffer.poll();
     }
 
     ////////////////////////////////////////////////////////////////////////////////

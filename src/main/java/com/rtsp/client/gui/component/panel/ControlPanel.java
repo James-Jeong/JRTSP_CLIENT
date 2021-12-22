@@ -1,5 +1,6 @@
 package com.rtsp.client.gui.component.panel;
 
+import com.rtsp.client.gui.GuiManager;
 import com.rtsp.client.gui.base.ButtonType;
 import com.rtsp.client.gui.buttonlistener.*;
 
@@ -14,6 +15,10 @@ public class ControlPanel extends JPanel {
     private final JButton stopButton = new JButton(ButtonType.STOP);
     private final JButton unregisterButton = new JButton(ButtonType.UNREGISTER);
     private final JButton finishButton = new JButton(ButtonType.FINISH);
+    private final JButton uploadButton = new JButton(ButtonType.UPLOAD);
+    private final JButton clearButton = new JButton(ButtonType.CLEAR);
+
+    private final JLabel iconLabel = new JLabel();
 
     public ControlPanel() {
         GridLayout gridLayout = new GridLayout(6, 1);
@@ -21,6 +26,15 @@ public class ControlPanel extends JPanel {
         gridLayout.setHgap(5);
         setLayout(gridLayout);
         initButton();
+
+        iconLabel.setIcon(null);
+        iconLabel.setText("IMAGE");
+        this.add(iconLabel);
+        iconLabel.setEnabled(true);
+    }
+
+    public JLabel getIconLabel() {
+        return iconLabel;
     }
 
     public void initButton() {
@@ -30,6 +44,8 @@ public class ControlPanel extends JPanel {
         stopButton.addActionListener(new StopButtonListener());
         unregisterButton.addActionListener(new UnregisterButtonListener());
         finishButton.addActionListener(new FinishButtonListener());
+        uploadButton.addActionListener(new UploadButtonListener());
+        clearButton.addActionListener(new ClearButtonListener());
 
         initButtonStatus();
 
@@ -39,6 +55,8 @@ public class ControlPanel extends JPanel {
         this.add(stopButton);
         this.add(unregisterButton);
         this.add(finishButton);
+        this.add(uploadButton);
+        this.add(clearButton);
     }
 
     public void initButtonStatus() {
@@ -48,6 +66,30 @@ public class ControlPanel extends JPanel {
         stopButton.setEnabled(false);
         unregisterButton.setEnabled(false);
         finishButton.setEnabled(true);
+        uploadButton.setEnabled(true);
+        clearButton.setEnabled(false);
+    }
+
+    public void applyUploadButtonStatus() {
+        registerButton.setEnabled(false);
+        playButton.setEnabled(true);
+        pauseButton.setEnabled(false);
+        stopButton.setEnabled(false);
+        finishButton.setEnabled(true);
+        unregisterButton.setEnabled(false);
+        uploadButton.setEnabled(false);
+        clearButton.setEnabled(true);
+    }
+
+    public void applyClearButtonStatus() {
+        registerButton.setEnabled(true);
+        playButton.setEnabled(false);
+        pauseButton.setEnabled(false);
+        stopButton.setEnabled(false);
+        finishButton.setEnabled(true);
+        unregisterButton.setEnabled(false);
+        uploadButton.setEnabled(true);
+        clearButton.setEnabled(false);
     }
 
     public void applyRegistrationButtonStatus() {
@@ -57,6 +99,8 @@ public class ControlPanel extends JPanel {
         stopButton.setEnabled(false);
         finishButton.setEnabled(true);
         unregisterButton.setEnabled(true);
+        uploadButton.setEnabled(false);
+        clearButton.setEnabled(false);
     }
 
     public void applyPlayButtonStatus() {
@@ -66,6 +110,8 @@ public class ControlPanel extends JPanel {
         stopButton.setEnabled(true);
         finishButton.setEnabled(false);
         unregisterButton.setEnabled(false);
+        uploadButton.setEnabled(false);
+        clearButton.setEnabled(false);
     }
 
     public void applyPauseButtonStatus() {
@@ -74,7 +120,9 @@ public class ControlPanel extends JPanel {
         pauseButton.setEnabled(false);
         stopButton.setEnabled(true);
         finishButton.setEnabled(false);
-        unregisterButton.setEnabled(true);
+        unregisterButton.setEnabled(!GuiManager.getInstance().isUploaded());
+        uploadButton.setEnabled(false);
+        clearButton.setEnabled(false);
     }
 
     public void applyStopButtonStatus() {
@@ -83,6 +131,8 @@ public class ControlPanel extends JPanel {
         pauseButton.setEnabled(false);
         stopButton.setEnabled(false);
         finishButton.setEnabled(false);
-        unregisterButton.setEnabled(true);
+        unregisterButton.setEnabled(!GuiManager.getInstance().isUploaded());
+        uploadButton.setEnabled(false);
+        clearButton.setEnabled(GuiManager.getInstance().isUploaded());
     }
 }

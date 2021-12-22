@@ -1,6 +1,9 @@
 package com.rtsp.client.media.netty.handler;
 
+import com.fsm.module.StateHandler;
 import com.rtsp.client.config.ConfigManager;
+import com.rtsp.client.fsm.RtspEvent;
+import com.rtsp.client.fsm.RtspState;
 import com.rtsp.client.gui.GuiManager;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspManager;
@@ -75,6 +78,12 @@ public class RtspRegisterChannelHandler extends SimpleChannelInboundHandler<Data
                 int status = registerRtspUnitRes.getStatusCode();
                 if (status == RegisterRtspUnitRes.SUCCESS) { // OK
                     // RTSP Channel OPEN (New RtspUnit)
+                    StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
+                    rtspStateHandler.fire(
+                            RtspEvent.REGISTER,
+                            rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
+                    );
+
                     GuiManager.getInstance().getControlPanel().applyRegistrationButtonStatus();
                     rtspUnit.open();
                 } else if (status == RegisterRtspUnitRes.NOT_ACCEPTED) { // NOT AUTHORIZED
@@ -101,6 +110,7 @@ public class RtspRegisterChannelHandler extends SimpleChannelInboundHandler<Data
 
                 int status = unRegisterRtspUnitRes.getStatusCode();
                 if (status == UnRegisterRtspUnitRes.SUCCESS) { // OK
+                    GuiManager.getInstance().getControlPanel().initButtonStatus();
                     RtspManager.getInstance().closeRtspUnit();
                 } else if (status == UnRegisterRtspUnitRes.NOT_ACCEPTED) { // NOT AUTHORIZED
                     RtspUnit rtspUnit = RtspManager.getInstance().getRtspUnit();

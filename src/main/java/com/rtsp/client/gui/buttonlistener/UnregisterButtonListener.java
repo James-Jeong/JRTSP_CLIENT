@@ -1,7 +1,6 @@
 package com.rtsp.client.gui.buttonlistener;
 
 import com.rtsp.client.config.ConfigManager;
-import com.rtsp.client.gui.GuiManager;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspRegisterNettyChannel;
@@ -17,16 +16,6 @@ public class UnregisterButtonListener implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        //MediaPanel mediaPanel = GuiManager.getInstance().getMediaPanel();
-        /*if ( number % 2 == 0) {
-            mediaPanel.initMediaPlayer("rtsp_client/src/main/resources/video/Seoul.mp4");
-        } else {
-            mediaPanel.initMediaPlayer("rtsp_client/src/main/resources/video/rabbit.mp4");
-        }
-        number++;*/
-
-        GuiManager.getInstance().getControlPanel().initButtonStatus();
-
         // Send UnRegister
         RtspRegisterNettyChannel rtspRegisterNettyChannel = NettyChannelManager.getInstance().getRegisterChannel();
         if (rtspRegisterNettyChannel == null) {

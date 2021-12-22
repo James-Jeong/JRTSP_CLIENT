@@ -3,6 +3,7 @@ package com.rtsp.client.media.netty.handler;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.protocol.RtpPacket;
+import com.rtsp.client.protocol.TsPacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -81,13 +82,18 @@ public class RtpChannelHandler extends SimpleChannelInboundHandler<DatagramPacke
                     );
                 }*/
             } else { // TS
-                // TODO Video Streaming > MP4 Data (From TS File)
                 RtpPacket rtpPacket = new RtpPacket(data, readBytes);
                 byte[] payload = rtpPacket.getPayload();
 
                 log.trace("({}) ({}) >> Recv TS RTP [{}] (payloadSize={})",
                         rtspUnit.getRtspUnitId(), rtspUnit.getSessionId(), rtpPacket, payload.length
                 );
+
+                TsPacket tsPacket = new TsPacket(payload);
+                log.trace("TS Packet {}", tsPacket.print());
+
+                byte[] tsPacketPayload = tsPacket.getPayload();
+                rtspUnit.offer(payload);
             }
         } catch (Exception e) {
             log.warn("RtpChannelHandler.channelRead0.Exception", e);

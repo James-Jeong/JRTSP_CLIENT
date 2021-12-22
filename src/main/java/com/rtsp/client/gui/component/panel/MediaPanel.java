@@ -25,12 +25,18 @@ public class MediaPanel extends JPanel {
     public MediaPanel() {
         this.setLayout(new BorderLayout());
         this.add(vFXPanel, BorderLayout.CENTER);
+        vFXPanel.setVisible(true);
 
         initMediaView();
     }
 
-    private void initMediaView() {
+    public void initMediaView() {
         mediaView = new MediaView();
+
+        // add video to stackPane
+        StackPane root = new StackPane();
+        root.getChildren().add(mediaView);
+        final Scene scene = new Scene(root);
 
         // resize video based on screen size
         final DoubleProperty width = mediaView.fitWidthProperty();
@@ -40,12 +46,6 @@ public class MediaPanel extends JPanel {
         height.bind(Bindings.selectDouble(mediaView.sceneProperty(), "height"));
         mediaView.setPreserveRatio(true);
 
-
-        // add video to stackPane
-        StackPane root = new StackPane();
-        root.getChildren().add(mediaView);
-        final Scene scene = new Scene(root);
-
         vFXPanel.setScene(scene);
     }
 
@@ -54,7 +54,7 @@ public class MediaPanel extends JPanel {
         media = new Media(videoFile.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
         mediaPlayer.setOnStopped(() -> {
-            GuiManager.getInstance().getControlPanel().applyRegistrationButtonStatus();
+            GuiManager.getInstance().getControlPanel().applyStopButtonStatus();
         });
         mediaView.setMediaPlayer(mediaPlayer);
     }

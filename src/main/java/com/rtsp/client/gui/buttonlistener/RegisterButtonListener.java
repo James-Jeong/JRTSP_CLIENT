@@ -6,26 +6,14 @@ import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspRegisterNettyChannel;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.service.AppInstance;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class RegisterButtonListener implements ActionListener {
 
-    private static final Logger log = LoggerFactory.getLogger(RegisterButtonListener.class);
-
     @Override
     public void actionPerformed(ActionEvent e) {
-        /*RegisterRtspUnitReq registerRtspUnitReq = new RegisterRtspUnitReq(
-                AppInstance.getInstance().getConfigManager().getMagicCookie(),
-                URtspMessageType.REGISTER, 1, 0,
-                "1234", 7200
-        );
-
-        log.debug("{}", registerRtspUnitReq);*/
-
         // Send Register
         RtspRegisterNettyChannel rtspRegisterNettyChannel = NettyChannelManager.getInstance().getRegisterChannel();
         if (rtspRegisterNettyChannel == null) {

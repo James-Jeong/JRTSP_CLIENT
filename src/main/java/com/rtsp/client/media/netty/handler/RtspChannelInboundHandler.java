@@ -3,21 +3,26 @@ package com.rtsp.client.media.netty.handler;
 import com.fsm.module.StateHandler;
 import com.rtsp.client.fsm.RtspEvent;
 import com.rtsp.client.fsm.RtspState;
+import com.rtsp.client.gui.GuiManager;
+import com.rtsp.client.gui.VideoPlayer;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspNettyChannel;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.media.sdp.base.Sdp;
+import com.rtsp.client.service.scheduler.schedule.ScheduleManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.rtsp.RtspHeaderNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @class public class RtspChannelHandler extends ChannelInboundHandlerAdapter
@@ -33,6 +38,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
     private final String rtspUnitId; // rtspUnitId
     private final String listenIp; // local ip
     private final int listenRtspPort; // local(listen) rtsp port
+    private final VideoPlayer videoPlayJob;
 
     ////////////////////////////////////////////////////////////////////////////////
 
@@ -41,6 +47,13 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
         this.rtspUnitId = rtspUnitId;
         this.listenIp = listenIp;
         this.listenRtspPort = listenRtspPort;
+
+        ScheduleManager.getInstance().initJob("VIDEO_PLAY", 1, 1);
+        videoPlayJob = new VideoPlayer(
+                rtspUnitId + "_videoPlayer",
+                1, 1, TimeUnit.MILLISECONDS,
+                1, 1, true
+        );
 
         logger.debug("({}) RtspChannelHandler is created. (listenIp={}, listenRtspPort={})", name, listenIp, listenRtspPort);
     }
@@ -128,7 +141,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                     case RtspState.OPTIONS:
                         logger.debug("({}) ({}) () < OPTIONS {}", name, rtspUnit.getRtspUnitId(), res);
 
-                        if (res.status().code() == 200) {
+                        if (res.status().code() == HttpResponseStatus.OK.code()) {
                             RtspNettyChannel rtspNettyChannel = NettyChannelManager.getInstance().getRtspChannel(rtspUnitId);
                             if (rtspNettyChannel != null) {
                                 rtspNettyChannel.sendDescribe(rtspUnit);
@@ -140,7 +153,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                                 );
                             }
                         } else {
-                            logger.warn("({}) ({}) () Fail to process OPTIONS. Status is not 200.", name, rtspUnit.getRtspUnitId());
+                            logger.warn("({}) ({}) () Fail to process OPTIONS. Status is not HttpResponseStatus.OK.code().", name, rtspUnit.getRtspUnitId());
                             NettyChannelManager.getInstance().deleteRtspChannel(rtspUnitId);
                             rtspStateHandler.fire(
                                     RtspEvent.IDLE,
@@ -152,13 +165,13 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                     case RtspState.DESCRIBE:
                         logger.debug("({}) ({}) () < DESCRIBE {}", name, rtspUnit.getRtspUnitId(), res);
 
-                        if (res.status().code() == 200) {
+                        if (res.status().code() == HttpResponseStatus.OK.code()) {
                             rtspStateHandler.fire(
                                     RtspEvent.DESCRIBE_OK,
                                     rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
                             );
                         } else {
-                            logger.warn("({}) ({}) () Fail to process DESCRIBE. Status code is not 200.", name, rtspUnit.getRtspUnitId());
+                            logger.warn("({}) ({}) () Fail to process DESCRIBE. Status code is not HttpResponseStatus.OK.code().", name, rtspUnit.getRtspUnitId());
                             NettyChannelManager.getInstance().deleteRtspChannel(rtspUnitId);
                             rtspStateHandler.fire(
                                     RtspEvent.IDLE,
@@ -204,7 +217,9 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                     case RtspState.PLAY:
                         logger.debug("({}) ({}) () < PLAY {}", name, rtspUnit.getRtspUnitId(), res);
 
-                        if (res.status().code() == 200) {
+                        if (res.status().code() == HttpResponseStatus.OK.code()) {
+                            rtspUnit.setPaused(false);
+
                             String range = res.headers().get(RtspHeaderNames.RANGE);
                             logger.debug("({}) ({}) range: {}", name, rtspUnit.getRtspUnitId(), range);
                             String startTime = range.substring(range.indexOf("npt") + 4, range.indexOf("-"));
@@ -219,9 +234,13 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                                 rtspUnit.setEndTime(Double.parseDouble(endTime));
                             }
 
+                            GuiManager.getInstance().getControlPanel().applyPlayButtonStatus();
+
+                            ScheduleManager.getInstance().startJob("VIDEO_PLAY", videoPlayJob);
+
                             logger.debug("({}) ({}) () Success to process PLAY.", name, rtspUnit.getRtspUnitId());
                         } else {
-                            logger.warn("({}) ({}) () Fail to process PLAY. Status code is not 200.", name, rtspUnit.getRtspUnitId());
+                            logger.warn("({}) ({}) () Fail to process PLAY. Status code is not HttpResponseStatus.OK.code().", name, rtspUnit.getRtspUnitId());
                             NettyChannelManager.getInstance().deleteRtspChannel(rtspUnitId);
                             rtspStateHandler.fire(
                                     RtspEvent.IDLE,
@@ -231,11 +250,28 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                         break;
                     case RtspState.PAUSE:
                         logger.debug("({}) ({}) () < PAUSE {}", name, rtspUnit.getRtspUnitId(), res);
+                        if (res.status().code() == HttpResponseStatus.OK.code()) {
+                            rtspUnit.setPaused(true);
+                            GuiManager.getInstance().getControlPanel().applyPauseButtonStatus();
+                        } else {
+                            // PAUSE 실패 > 이미 동영상 스트리밍 종료되었다는 의미 > TEARDOWN 상태로 전환 필요
+                            rtspUnit.setPaused(false);
 
+                            // Send TEARDOWN
+                            RtspNettyChannel rtspNettyChannel = NettyChannelManager.getInstance().getRtspChannel(rtspUnit.getRtspUnitId());
+                            if (rtspNettyChannel != null) {
+                                rtspNettyChannel.sendStop(rtspUnit);
+                            }
+                        }
                         break;
                     case RtspState.STOP:
                         logger.debug("({}) ({}) () < TEARDOWN {}", name, rtspUnit.getRtspUnitId(), res);
-                        RtspManager.getInstance().clearRtspUnit();
+                        if (res.status().code() == HttpResponseStatus.OK.code()) {
+                            ScheduleManager.getInstance().stopJob("VIDEO_PLAY", videoPlayJob);
+
+                            GuiManager.getInstance().getControlPanel().applyStopButtonStatus();
+                            RtspManager.getInstance().clearRtspUnit();
+                        }
                         break;
                     default:
                         logger.debug("({}) ({}) () < MSG {}", name, rtspUnit.getRtspUnitId(), res);

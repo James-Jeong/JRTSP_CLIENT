@@ -7,6 +7,7 @@ package com.rtsp.client.fsm;
 public class RtspEvent {
 
     public static final String IDLE = "idle";
+    public static final String REGISTER = "register";
     public static final String OPTIONS = "options";
     public static final String DESCRIBE = "describe";
     public static final String DESCRIBE_OK = "describe_ok";
