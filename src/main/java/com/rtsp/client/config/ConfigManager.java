@@ -16,6 +16,7 @@ public class ConfigManager {
 
     // Section String
     public static final String SECTION_COMMON = "COMMON"; // COMMON Section 이름
+    public static final String SECTION_FFMPEG = "FFMPEG"; // FFMPEG Section 이름
     public static final String SECTION_NETWORK = "NETWORK"; // NETWORK Section 이름
     public static final String SECTION_RTSP = "RTSP"; // NETWORK Section 이름
     public static final String SECTION_REGISTER = "REGISTER"; // REGISTER Section 이름
@@ -23,28 +24,41 @@ public class ConfigManager {
     // SECTION_COMMON Field String
     private static final String FIELD_SEND_BUF_SIZE = "SEND_BUF_SIZE";
     private static final String FIELD_RECV_BUF_SIZE = "RECV_BUF_SIZE";
+
+    // SECTION_FFMPEG Field String
+    public static final String FIELD_FFMPEG_PATH = "FFMPEG_PATH";
+    public static final String FIELD_FFPROBE_PATH = "FFPROBE_PATH";
+    public static final String FIELD_TEMP_ROOT_PATH = "TEMP_ROOT_PATH";
+    public static final String FIELD_DELETE_M3U8 = "DELETE_M3U8";
+    public static final String FIELD_DELETE_TS = "DELETE_TS";
+
     // SECTION_NETWORK Field String
     private static final String FIELD_USER_AGENT = "USER_AGENT";
     private static final String FIELD_LOCAL_LISTEN_IP = "LOCAL_LISTEN_IP";
     private static final String FIELD_LOCAL_LISTEN_PORT = "LOCAL_LISTEN_PORT";
     private static final String FIELD_TARGET_IP = "TARGET_IP";
     private static final String FIELD_TARGET_PORT = "TARGET_PORT";
+
     // SECTION_COMMON Field String
     private static final String FIELD_STREAM_THREAD_POOL_SIZE = "STREAM_THREAD_POOL_SIZE";
-    private static final String FIELD_LOCAL_RTSP_LISTEN_IP = "LOCAL_RTSP_LISTEN_IP";
-    private static final String FIELD_LOCAL_RTSP_LISTEN_PORT = "LOCAL_RTSP_LISTEN_PORT";
     private static final String FIELD_TARGET_RTSP_IP = "TARGET_RTSP_IP";
     private static final String FIELD_TARGET_RTSP_PORT = "TARGET_RTSP_PORT";
-    private static final String FIELD_URI = "uri";
+    private static final String FIELD_URI = "URI";
+
     // SECTION_COMMON Field String
     private static final String FIELD_MAGIC_COOKIE = "MAGIC_COOKIE";
     private static final String FIELD_HASH_KEY = "HASH_KEY";
 
-
-
     // COMMON
     private int sendBufSize;
     private int recvBufSize;
+
+    // FFMPEG
+    private String ffmpegPath = null;
+    private String ffprobePath = null;
+    private String tempRootPath = null;
+    private boolean deleteM3u8 = false;
+    private boolean deleteTs = false;
 
     // NETWORK
     private String localListenIp;
@@ -81,6 +95,7 @@ public class ConfigManager {
             this.ini = new Ini(iniFile);
 
             loadCommonConfig();
+            loadFfmpegConfig();
             loadNetworkConfig();
             loadRtspConfig();
             loadRegisterConfig();
@@ -109,6 +124,32 @@ public class ConfigManager {
         }
 
         logger.debug("Load [{}] config...(OK)", SECTION_COMMON);
+    }
+
+    /**
+     * @fn private void loadFfmpegConfig()
+     * @brief FFMPEG Section 을 로드하는 함수
+     */
+    private void loadFfmpegConfig() {
+        this.ffmpegPath = getIniValue(SECTION_FFMPEG, FIELD_FFMPEG_PATH);
+        if (this.ffmpegPath == null) {
+            return;
+        }
+
+        this.ffprobePath = getIniValue(SECTION_FFMPEG, FIELD_FFPROBE_PATH);
+        if (this.ffprobePath == null) {
+            return;
+        }
+
+        this.tempRootPath = getIniValue(SECTION_FFMPEG, FIELD_TEMP_ROOT_PATH);
+        if (this.tempRootPath == null) {
+            return;
+        }
+
+        this.deleteM3u8 = Boolean.parseBoolean(getIniValue(SECTION_FFMPEG, FIELD_DELETE_M3U8));
+        this.deleteTs = Boolean.parseBoolean(getIniValue(SECTION_FFMPEG, FIELD_DELETE_TS));
+
+        logger.debug("Load [{}] config...(OK)", SECTION_FFMPEG);
     }
 
     /**
@@ -204,6 +245,40 @@ public class ConfigManager {
         } catch (IOException e) {
             logger.warn("Fail to set the config. (section={}, field={}, value={})", section, key, value);
         }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public boolean isDeleteM3u8() {
+        return deleteM3u8;
+    }
+
+    public boolean isDeleteTs() {
+        return deleteTs;
+    }
+
+    public String getTempRootPath() {
+        return tempRootPath;
+    }
+
+    public void setTempRootPath(String tempRootPath) {
+        this.tempRootPath = tempRootPath;
+    }
+
+    public String getFfmpegPath() {
+        return ffmpegPath;
+    }
+
+    public void setFfmpegPath(String ffmpegPath) {
+        this.ffmpegPath = ffmpegPath;
+    }
+
+    public String getFfprobePath() {
+        return ffprobePath;
+    }
+
+    public void setFfprobePath(String ffprobePath) {
+        this.ffprobePath = ffprobePath;
     }
 
     public String getUri() {

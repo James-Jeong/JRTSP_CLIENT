@@ -50,23 +50,30 @@ public class RtspManager {
         if (rtspUnit != null) {
             String rtspUnitId = rtspUnit.getRtspUnitId();
             NettyChannelManager.getInstance().deleteRtspChannel(rtspUnitId);
-            clearRtspUnit();
+            clearRtspUnit(true);
 
             rtspUnit = null;
         }
     }
 
-    public void clearRtspUnit() {
+    public void clearRtspUnit(boolean isFinished) {
         if (rtspUnit != null) {
             String rtspUnitId = rtspUnit.getRtspUnitId();
             NettyChannelManager.getInstance().deleteRtpChannel(rtspUnitId);
             NettyChannelManager.getInstance().deleteRtcpChannel(rtspUnitId);
 
             StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
-            rtspStateHandler.fire(
-                    RtspEvent.IDLE,
-                    rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
-            );
+            if (isFinished) {
+                rtspStateHandler.fire(
+                        RtspEvent.IDLE,
+                        rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
+                );
+            } else {
+                rtspStateHandler.fire(
+                        RtspEvent.TEARDOWN_OK,
+                        rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
+                );
+            }
 
             rtspUnit.clear();
         }

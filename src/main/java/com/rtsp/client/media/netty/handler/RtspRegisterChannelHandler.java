@@ -86,7 +86,7 @@ public class RtspRegisterChannelHandler extends SimpleChannelInboundHandler<Data
 
                     GuiManager.getInstance().getControlPanel().applyRegistrationButtonStatus();
                     rtspUnit.open();
-                } else if (status == RegisterRtspUnitRes.NOT_ACCEPTED) { // NOT AUTHORIZED
+                } else if (status == RegisterRtspUnitRes.NOT_AUTHORIZED) { // NOT AUTHORIZED
                     // KEY 를 사용하여 MD5 해싱한 값을 다시 REGISTER 에 담아서 전송
                     ConfigManager configManager = AppInstance.getInstance().getConfigManager();
                     MessageDigest messageDigest = MessageDigest.getInstance("MD5");
