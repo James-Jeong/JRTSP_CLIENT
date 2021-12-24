@@ -1,6 +1,7 @@
 package com.rtsp.client.gui.component;
 
 import com.rtsp.client.gui.GuiManager;
+import com.rtsp.client.gui.component.panel.MediaPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,14 +23,15 @@ public class ClientFrame extends JFrame {
         // 화면 가운데 배치
         setLocationRelativeTo(null);
         // 닫을 때 메모리에서 제거되도록 설정
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         // layout 설정
         BorderLayout borderLayout = new BorderLayout();
         setLayout(borderLayout);
         // panel 설정
         GuiManager guiManager = GuiManager.getInstance();
-        add(guiManager.getMediaPanel(), BorderLayout.CENTER);
-        add(guiManager.getControlPanel(), BorderLayout.EAST);
+
+        add(new MediaPanel(), BorderLayout.CENTER);
+        add(guiManager.getUriPanel(), BorderLayout.SOUTH);
 
         // 보이게 설정
         setVisible(true);

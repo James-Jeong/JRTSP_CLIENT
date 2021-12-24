@@ -21,7 +21,7 @@ public class StopButtonListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (GuiManager.getInstance().isUploaded()) {
-            GuiManager.getInstance().getMediaPanel().getMediaPlayer().stop();
+            GuiManager.getInstance().getVideoPanel().getMediaPlayer().stop();
             GuiManager.getInstance().getControlPanel().applyStopButtonStatus();
             return;
         }
@@ -33,7 +33,6 @@ public class StopButtonListener implements ActionListener {
         }
 
         StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
-
         RtspNettyChannel rtspNettyChannel = NettyChannelManager.getInstance().getRtspChannel(rtspUnit.getRtspUnitId());
         if (rtspNettyChannel != null) {
             rtspNettyChannel.sendStop(rtspUnit);

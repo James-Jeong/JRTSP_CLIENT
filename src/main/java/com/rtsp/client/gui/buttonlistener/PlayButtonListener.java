@@ -8,6 +8,8 @@ import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspNettyChannel;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
+import javafx.scene.media.MediaPlayer;
+import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +24,12 @@ public class PlayButtonListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (GuiManager.getInstance().isUploaded()) {
-            GuiManager.getInstance().getMediaPanel().getMediaPlayer().play();
+            MediaPlayer mediaPlayer = GuiManager.getInstance().getVideoPanel().getMediaPlayer();
+            if (mediaPlayer == null) {
+                return;
+            }
+
+            mediaPlayer.play();
             GuiManager.getInstance().getControlPanel().applyPlayButtonStatus();
             return;
         }
@@ -37,16 +44,30 @@ public class PlayButtonListener implements ActionListener {
         RtspNettyChannel rtspNettyChannel = NettyChannelManager.getInstance().getRtspChannel(rtspUnit.getRtspUnitId());
 
         if (rtspUnit.isPaused()) {
-            if (rtspNettyChannel != null) {
-                rtspNettyChannel.sendPlay(rtspUnit,
-                        rtspUnit.getStartTime(),
-                        rtspUnit.getEndTime()
-                );
+            MediaPlayer mediaPlayer = GuiManager.getInstance().getVideoPanel().getMediaPlayer();
+            if (mediaPlayer != null) {
+                Duration duration = mediaPlayer.getCurrentTime();
+                double curTime = duration.toSeconds();
+                rtspUnit.setStartTime(curTime);
+                if (rtspNettyChannel != null) {
+                    rtspNettyChannel.sendPlay(rtspUnit,
+                            rtspUnit.getStartTime(),
+                            rtspUnit.getEndTime()
+                    );
+                } else {
+                    logger.warn("({}) Fail to process PLAY. Rtsp Channel is closed. (prev: PAUSE)", rtspUnit.getRtspUnitId());
+                    if (rtspStateHandler != null) {
+                        rtspStateHandler.fire(
+                                RtspEvent.PLAY_FAIL,
+                                rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
+                        );
+                    }
+                }
             } else {
-                logger.warn("({}) Rtsp Channel is closed. Fail to process PLAY. (prev: PAUSE)", rtspUnit.getRtspUnitId());
+                logger.warn("({}) Fail to process PLAY. Media player is null. (prev: PAUSE)", rtspUnit.getRtspUnitId());
                 if (rtspStateHandler != null) {
                     rtspStateHandler.fire(
-                            RtspEvent.IDLE,
+                            RtspEvent.PLAY_FAIL,
                             rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
                     );
                 }

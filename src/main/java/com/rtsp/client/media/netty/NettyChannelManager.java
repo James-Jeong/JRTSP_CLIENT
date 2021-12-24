@@ -78,7 +78,7 @@ public class NettyChannelManager {
     ////////////////////////////////////////////////////////////////////////////////
 
     // Register 200 OK 응답 호출 시 생성되는 Rtsp Response 수신 채널
-    public RtspNettyChannel openRtspChannel(String rtspUnitId, String ip, int port) {
+    public RtspNettyChannel openRtspChannel(String rtspUnitId, String ip, int port, String uri) {
         try {
             rtspChannelMapLock.lock();
 
@@ -88,9 +88,10 @@ public class NettyChannelManager {
             }
 
             ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-            String uri = configManager.getUri();
-            RtspNettyChannel rtspNettyChannel = new RtspNettyChannel(rtspUnitId, ip, port, uri);
-            rtspNettyChannel.run(ip, port);
+            String localListenIp = configManager.getLocalListenIp();
+            int localListenPort = configManager.getLocalRtspPort();
+            RtspNettyChannel rtspNettyChannel = new RtspNettyChannel(rtspUnitId, localListenIp, localListenPort, uri);
+            rtspNettyChannel.run();
 
             // 메시지 송신용 채널 open
             Channel channel = rtspNettyChannel.openChannel(

@@ -28,8 +28,7 @@ public class UploadButtonListener implements ActionListener {
         }
 
         String filePath = fileUploader.getSelectedFile().getPath();
-        GuiManager.getInstance().getControlPanel().getIconLabel().setIcon(new ImageIcon(filePath));
-        GuiManager.getInstance().getMediaPanel().initMediaPlayer(filePath);
+        GuiManager.getInstance().getVideoPanel().initMediaPlayer(filePath);
         GuiManager.getInstance().setUploaded(true);
         GuiManager.getInstance().getControlPanel().applyUploadButtonStatus();
     }

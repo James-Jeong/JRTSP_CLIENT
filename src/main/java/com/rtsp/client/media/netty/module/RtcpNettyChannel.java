@@ -94,7 +94,7 @@ public class RtcpNettyChannel { // > UDP
      */
     public Channel openChannel (String ip, int port) {
         if (serverChannel != null) {
-            logger.warn("Channel is already opened.");
+            //logger.warn("Channel is already opened.");
             return null;
         }
 
@@ -111,7 +111,7 @@ public class RtcpNettyChannel { // > UDP
         try {
             channelFuture = b.bind(address, port).sync();
             serverChannel = channelFuture.channel();
-            logger.debug("Channel is opened. (ip={}, port={})", address, port);
+            //logger.debug("Channel is opened. (ip={}, port={})", address, port);
 
             return channelFuture.channel();
         } catch (Exception e) {
@@ -126,13 +126,13 @@ public class RtcpNettyChannel { // > UDP
      */
     public void closeChannel ( ) {
         if (serverChannel == null) {
-            logger.warn("Channel is already closed.");
+            //logger.warn("Channel is already closed.");
             return;
         }
 
         serverChannel.close();
         serverChannel = null;
-        logger.debug("Channel is closed.");
+        //logger.debug("Channel is closed.");
     }
 
     public String getListenIp() {

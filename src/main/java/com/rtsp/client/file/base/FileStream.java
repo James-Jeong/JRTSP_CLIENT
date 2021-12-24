@@ -41,6 +41,22 @@ public class FileStream {
             if (isDelete) {
                 // 파일 append 를 막기 위해 기존 파일을 지운다.
                 removeFile();
+                ramFile = new File(filePath);
+                try {
+                    String pathOnly = filePath.substring(0, filePath.lastIndexOf("/"));
+                    File pathFileOnly = new File(pathOnly);
+                    if (!pathFileOnly.exists()) {
+                        if (pathFileOnly.mkdirs()) {
+                            logger.debug("Success to create a new directory. (path={})", pathOnly);
+                        }
+                    }
+
+                    if (ramFile.createNewFile()) {
+                        logger.debug("Success to create a new file. (path={})", filePath);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Fail to create a new file. (path={})", filePath, e);
+                }
             }
         }
     }
@@ -64,8 +80,6 @@ public class FileStream {
 
                 ramFile = null;
                 totalDataSize = 0;
-            } else {
-                logger.warn("Fail to remove the file. Not exists. ({})", filePath);
             }
         } catch (Exception e) {
             logger.warn("Fail to remove the file. (path={})", filePath, e);
@@ -139,8 +153,10 @@ public class FileStream {
         try {
             fileStreamLock.lock();
 
-            fileOutputStream.write(data);
-            totalDataSize += data.length;
+            if (fileOutputStream != null) {
+                fileOutputStream.write(data);
+                totalDataSize += data.length;
+            }
         } catch (Exception e) {
             logger.warn("Fail to write media data. (path={})", filePath, e);
             return false;
@@ -159,4 +175,16 @@ public class FileStream {
         return totalDataSize;
     }
 
+    @Override
+    public String toString() {
+        return "FileStream{" +
+                "filePath='" + filePath + '\'' +
+                ", ramFile=" + ramFile +
+                ", fileOutputStream=" + fileOutputStream +
+                ", fileStreamLock=" + fileStreamLock +
+                ", isQuit=" + isQuit +
+                ", limitDataSize=" + limitDataSize +
+                ", totalDataSize=" + totalDataSize +
+                '}';
+    }
 }

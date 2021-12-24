@@ -21,7 +21,7 @@ public class PauseButtonListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (GuiManager.getInstance().isUploaded()) {
-            GuiManager.getInstance().getMediaPanel().getMediaPlayer().pause();
+            GuiManager.getInstance().getVideoPanel().getMediaPlayer().pause();
             GuiManager.getInstance().getControlPanel().applyPauseButtonStatus();
             return;
         }

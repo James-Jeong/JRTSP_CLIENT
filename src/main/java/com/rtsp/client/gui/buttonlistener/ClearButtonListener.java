@@ -9,9 +9,9 @@ public class ClearButtonListener implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        GuiManager.getInstance().getMediaPanel().getMediaPlayer().stop();
-        GuiManager.getInstance().getMediaPanel().getMediaPlayer().dispose();
-        GuiManager.getInstance().getMediaPanel().initMediaView();
+        GuiManager.getInstance().getVideoPanel().getMediaPlayer().stop();
+        GuiManager.getInstance().getVideoPanel().getMediaPlayer().dispose();
+        GuiManager.getInstance().getVideoPanel().initMediaView();
         GuiManager.getInstance().getControlPanel().applyClearButtonStatus();
         GuiManager.getInstance().setUploaded(false);
     }

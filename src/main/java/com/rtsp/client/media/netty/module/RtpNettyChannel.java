@@ -34,11 +34,10 @@ public class RtpNettyChannel {
     }
 
     public void run () {
-        bootstrap = new Bootstrap();
-        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(10);
-
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
 
+        bootstrap = new Bootstrap();
+        EventLoopGroup eventLoopGroup = new NioEventLoopGroup(configManager.getStreamThreadPoolSize());
         bootstrap.group(eventLoopGroup)
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_BROADCAST, false)

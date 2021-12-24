@@ -31,19 +31,22 @@ public class ConfigManager {
     public static final String FIELD_TEMP_ROOT_PATH = "TEMP_ROOT_PATH";
     public static final String FIELD_DELETE_M3U8 = "DELETE_M3U8";
     public static final String FIELD_DELETE_TS = "DELETE_TS";
+    public static final String FIELD_DELETE_MP4 = "DELETE_MP4";
 
     // SECTION_NETWORK Field String
-    private static final String FIELD_USER_AGENT = "USER_AGENT";
     private static final String FIELD_LOCAL_LISTEN_IP = "LOCAL_LISTEN_IP";
     private static final String FIELD_LOCAL_LISTEN_PORT = "LOCAL_LISTEN_PORT";
     private static final String FIELD_TARGET_IP = "TARGET_IP";
     private static final String FIELD_TARGET_PORT = "TARGET_PORT";
 
-    // SECTION_COMMON Field String
+    // SECTION_RTSP Field String
+    private static final String FIELD_USER_AGENT = "USER_AGENT";
     private static final String FIELD_STREAM_THREAD_POOL_SIZE = "STREAM_THREAD_POOL_SIZE";
+    private static final String FIELD_LOCAL_RTSP_PORT = "LOCAL_RTSP_PORT";
     private static final String FIELD_TARGET_RTSP_IP = "TARGET_RTSP_IP";
     private static final String FIELD_TARGET_RTSP_PORT = "TARGET_RTSP_PORT";
-    private static final String FIELD_URI = "URI";
+    private static final String FIELD_URI_LIMIT = "URI_LIMIT";
+    private static final String FIELD_RTP_TIMEOUT = "RTP_TIMEOUT";
 
     // SECTION_COMMON Field String
     private static final String FIELD_MAGIC_COOKIE = "MAGIC_COOKIE";
@@ -59,6 +62,7 @@ public class ConfigManager {
     private String tempRootPath = null;
     private boolean deleteM3u8 = false;
     private boolean deleteTs = false;
+    private boolean deleteMp4 = false;
 
     // NETWORK
     private String localListenIp;
@@ -69,9 +73,11 @@ public class ConfigManager {
     // RTSP
     private String userAgent;
     private int streamThreadPoolSize;
+    private int localRtspPort;
     private String targetRtspIp;
     private int targetRtspPort;
-    private String uri;
+    private int uriLimit;
+    private long rtpTimeout; // sec
 
     // REGISTER
     private String magicCookie;
@@ -148,6 +154,7 @@ public class ConfigManager {
 
         this.deleteM3u8 = Boolean.parseBoolean(getIniValue(SECTION_FFMPEG, FIELD_DELETE_M3U8));
         this.deleteTs = Boolean.parseBoolean(getIniValue(SECTION_FFMPEG, FIELD_DELETE_TS));
+        this.deleteMp4 = Boolean.parseBoolean(getIniValue(SECTION_FFMPEG, FIELD_DELETE_MP4));
 
         logger.debug("Load [{}] config...(OK)", SECTION_FFMPEG);
     }
@@ -179,17 +186,30 @@ public class ConfigManager {
     private void loadRtspConfig() {
         userAgent = getIniValue(SECTION_RTSP, FIELD_USER_AGENT);
 
-        uri = getIniValue(SECTION_RTSP, FIELD_URI);
-
         streamThreadPoolSize = Integer.parseInt(getIniValue(SECTION_RTSP, FIELD_STREAM_THREAD_POOL_SIZE));
         if (streamThreadPoolSize <= 0) {
             streamThreadPoolSize = 10;
         }
 
+        localRtspPort = Integer.parseInt(getIniValue(SECTION_RTSP, FIELD_LOCAL_RTSP_PORT));
+        if (localRtspPort <= 0) {
+            localRtspPort = 8554;
+        }
+
         targetRtspIp = getIniValue(SECTION_RTSP, FIELD_TARGET_RTSP_IP);
         targetRtspPort = Integer.parseInt(getIniValue(SECTION_RTSP, FIELD_TARGET_RTSP_PORT));
         if (targetRtspPort <= 0) {
-            targetRtspPort = 8500;
+            targetRtspPort = 8554;
+        }
+
+        uriLimit = Integer.parseInt(getIniValue(SECTION_RTSP, FIELD_URI_LIMIT));
+        if (uriLimit <= 0) {
+            uriLimit = 100;
+        }
+
+        rtpTimeout = Integer.parseInt(getIniValue(SECTION_RTSP, FIELD_RTP_TIMEOUT));
+        if (rtpTimeout < 0) {
+            rtpTimeout = 2000;
         }
 
         logger.debug("Load [{}] config...(OK)", SECTION_RTSP);
@@ -249,6 +269,22 @@ public class ConfigManager {
 
     ////////////////////////////////////////////////////////////////////////////////
 
+    public int getLocalRtspPort() {
+        return localRtspPort;
+    }
+
+    public boolean isDeleteMp4() {
+        return deleteMp4;
+    }
+
+    public long getRtpTimeout() {
+        return rtpTimeout;
+    }
+
+    public void setRtpTimeout(long rtpTimeout) {
+        this.rtpTimeout = rtpTimeout;
+    }
+
     public boolean isDeleteM3u8() {
         return deleteM3u8;
     }
@@ -279,10 +315,6 @@ public class ConfigManager {
 
     public void setFfprobePath(String ffprobePath) {
         this.ffprobePath = ffprobePath;
-    }
-
-    public String getUri() {
-        return uri;
     }
 
     public void setIni(Ini ini) {
@@ -375,5 +407,9 @@ public class ConfigManager {
 
     public String getHashKey() {
         return hashKey;
+    }
+
+    public int getUriLimit() {
+        return uriLimit;
     }
 }

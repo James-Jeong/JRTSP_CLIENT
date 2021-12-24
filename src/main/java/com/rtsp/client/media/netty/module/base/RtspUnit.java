@@ -12,6 +12,7 @@ import com.rtsp.client.media.sdp.SdpParser;
 import com.rtsp.client.media.sdp.base.Sdp;
 import com.rtsp.client.service.AppInstance;
 import com.rtsp.client.service.base.ConcurrentCyclicFIFO;
+import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public class RtspUnit {
 
     public static final int MAX_SESSION_ID = 100000;
 
+    private final String uri;
     private final String rtspUnitId; // ID of the RTSP session
     private long sessionId; // ID of the session
     private final SdpParser sdpParser = new SdpParser();
@@ -51,19 +53,27 @@ public class RtspUnit {
     private Double startTime = 0.000;
     private Double endTime = 0.000;
 
+    private final StopWatch rtpTimeoutStopWatch = new StopWatch();
+    private boolean isStarted = false;
     private boolean isPaused = false;
+    private boolean isCompleted = false;
+    private boolean isRegistered = false;
+    private boolean isRecvData = false;
 
     private final ConcurrentCyclicFIFO<byte[]> readBuffer = new ConcurrentCyclicFIFO<>();
 
     private final FileManager fileManager;
+    private final String fileNameOnly;
     private final String tempFileRootPath;
     private final String m3u8FilePath;
     private final String tsFilePath;
+    private final String mp4FilePath;
     private int tsFileLimit = 0;
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public RtspUnit(String targetIp, int targetPort) {
+    public RtspUnit(String targetIp, int targetPort, String uri) {
+        this.uri = uri;
         this.rtspUnitId = UUID.randomUUID().toString();
         this.rtspStateUnitId = UUID.randomUUID().toString();
         this.targetIp = targetIp;
@@ -71,10 +81,10 @@ public class RtspUnit {
         this.fileManager = new FileManager(rtspUnitId);
         rtspFsmManager.init(this);
 
-        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-        String onlyFileName = fileManager.getFileNameExceptForExtension(configManager.getUri());
+        fileNameOnly = fileManager.getFileNameExceptForExtension(uri);
 
-        this.tempFileRootPath = configManager.getTempRootPath() + onlyFileName + "_tmp";
+        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+        this.tempFileRootPath = configManager.getTempRootPath() + fileNameOnly + "_tmp";
         File tempRootPathDirectory = new File(tempFileRootPath);
         if (!tempRootPathDirectory.exists()) {
             if (tempRootPathDirectory.mkdirs()) {
@@ -82,8 +92,9 @@ public class RtspUnit {
             }
         }
 
-        this.m3u8FilePath = tempFileRootPath + onlyFileName + ".m3u8";
-        this.tsFilePath = tempFileRootPath + onlyFileName + "%d.ts";
+        this.m3u8FilePath = tempFileRootPath + fileNameOnly + ".m3u8";
+        this.tsFilePath = tempFileRootPath + fileNameOnly + "%d.ts";
+        this.mp4FilePath = tempFileRootPath + fileNameOnly + ".mp4";;
 
         logger.debug("({}) RtspUnit is created. (m3u8FilePath={}, tsFilePath={})", rtspUnitId, m3u8FilePath, tsFilePath);
     }
@@ -92,11 +103,56 @@ public class RtspUnit {
         rtspChannel = NettyChannelManager.getInstance().openRtspChannel(
                 rtspUnitId,
                 targetIp,
-                targetPort
+                targetPort,
+                uri
         );
     }
 
-    ////////////////////////////////////////////////////////////////////////////////s
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public boolean isRecvData() {
+        return isRecvData;
+    }
+
+    public void setRecvData(boolean recvData) {
+        isRecvData = recvData;
+    }
+
+    public StopWatch getRtpTimeoutStopWatch() {
+        return rtpTimeoutStopWatch;
+    }
+
+    public boolean isStarted() {
+        return isStarted;
+    }
+
+    public void setStarted(boolean started) {
+        isStarted = started;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public String getMp4FilePath() {
+        return mp4FilePath;
+    }
+
+    public boolean isRegistered() {
+        return isRegistered;
+    }
+
+    public void setRegistered(boolean registered) {
+        isRegistered = registered;
+    }
+
+    public boolean isCompleted() {
+        return isCompleted;
+    }
+
+    public void setCompleted(boolean completed) {
+        isCompleted = completed;
+    }
 
     public int getTsFileLimit() {
         return tsFileLimit;
@@ -104,6 +160,14 @@ public class RtspUnit {
 
     public void setTsFileLimit(int tsFileLimit) {
         this.tsFileLimit = tsFileLimit;
+    }
+
+    public String getFileNameOnly() {
+        return fileNameOnly;
+    }
+
+    public String getTempFileRootPath() {
+        return tempFileRootPath;
     }
 
     public String getM3u8FilePath() {
@@ -233,17 +297,20 @@ public class RtspUnit {
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public void clear() {
-        sessionId = 0;
-        congestionLevel = 0;
-        rtspChannel = null;
-        listenRtpPort = 0;
-        listenRtcpPort = 0;
-        transportType = null;
-        sdp = null;
-        startTime = 0.000;
-        endTime = 0.000;
-        isPaused = false;
+    public void clear(boolean isStopped) {
+        if (isStopped) {
+            sessionId = 0;
+            congestionLevel = 0;
+            rtspChannel = null;
+            listenRtpPort = 0;
+            listenRtcpPort = 0;
+            transportType = null;
+            sdp = null;
+            startTime = 0.000;
+            endTime = 0.000;
+            isPaused = false;
+            isCompleted = false;
+        }
 
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
         if (configManager.isDeleteM3u8()) {
@@ -254,10 +321,33 @@ public class RtspUnit {
             fileManager.removeAllTsFiles();
         }
 
-        if (configManager.isDeleteM3u8() && configManager.isDeleteTs()) {
+        if (configManager.isDeleteMp4()) {
+            File mp4File = new File(mp4FilePath);
+            if (mp4File.exists()) {
+                if (mp4File.delete()) {
+                    logger.debug("({}) Success to delete the mp4 file. (path={})", rtspUnitId, mp4FilePath);
+                }
+            }
+        }
+
+        if (configManager.isDeleteM3u8() && configManager.isDeleteTs() && configManager.isDeleteMp4()) {
             File tempRootPathDirectory = new File(tempFileRootPath);
-            if (tempRootPathDirectory.exists() && tempRootPathDirectory.delete()) {
-                logger.debug("({}) The temp root directory is deleted. (path={})", rtspUnitId, tempFileRootPath);
+            if (tempRootPathDirectory.exists()) {
+                if (tempRootPathDirectory.delete()) {
+                    logger.debug("({}) The temp root directory is deleted. (path={})", rtspUnitId, tempFileRootPath);
+                } else {
+                    File[] deleteFolderList = tempRootPathDirectory.listFiles();
+                    if (deleteFolderList != null) {
+                        for (File file : deleteFolderList) {
+                            if (file.delete()) {
+                                logger.debug("({}) The temp file is deleted. (path={})", rtspUnitId, file.getAbsolutePath());
+                            }
+                        }
+                    }
+                    if (tempRootPathDirectory.delete()) {
+                        logger.debug("({}) The temp root directory is deleted. (path={})", rtspUnitId, tempFileRootPath);
+                    }
+                }
             }
         }
     }

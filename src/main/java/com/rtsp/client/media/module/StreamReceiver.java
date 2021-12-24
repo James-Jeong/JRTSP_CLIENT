@@ -1,16 +1,21 @@
 package com.rtsp.client.media.module;
 
+import com.rtsp.client.ffmpeg.FfmpegManager;
 import com.rtsp.client.file.FileManager;
 import com.rtsp.client.file.base.FileStream;
+import com.rtsp.client.gui.GuiManager;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
+import com.rtsp.client.service.AppInstance;
 import com.rtsp.client.service.scheduler.job.Job;
 import io.lindstrom.m3u8.model.MediaPlaylist;
 import io.lindstrom.m3u8.model.MediaSegment;
 import io.lindstrom.m3u8.parser.MediaPlaylistParser;
+import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.List;
@@ -22,8 +27,8 @@ public class StreamReceiver extends Job {
 
     public static final String M3U8_FILE_HEADER = "#EXTM3U";
     public static final String FFMPEG_TS_FILE_HEADER = "FFmpeg";
-    //public static final byte[] LAST_TS_FILE_HEAD = { 0x47, 0x01, 0x01, 0x3D };
-    //public static final byte[] LAST_TS_FILE_TAIL = { (byte) 0xF1, 0x4C, (byte) 0x80, 0x01, (byte) 0xBF, (byte) 0xFC, 0x21, 0x10, 0x04, 0x60, (byte) 0x8C, 0x1C };
+
+    private final FfmpegManager ffmpegManager = new FfmpegManager();
 
     ////////////////////////////////////////////////////////////////////////////////
 
@@ -40,13 +45,60 @@ public class StreamReceiver extends Job {
             return;
         }
 
-        byte[] data = rtspUnit.poll();
-        if (data == null || data.length <= 0) {
+        FileManager fileManager = rtspUnit.getFileManager();
+        StopWatch rtpTimeoutStopWatch = rtspUnit.getRtpTimeoutStopWatch();
+
+        if (rtspUnit.isCompleted()) {
+            if (rtpTimeoutStopWatch.getTime() > 0) {
+                rtpTimeoutStopWatch.reset();
+            }
+            rtspUnit.setStarted(false);
             return;
         }
 
+        if (!rtspUnit.isStarted()) {
+            rtspUnit.setStarted(true);
+            rtpTimeoutStopWatch.start();
+        }
+
+        // Convert M3U8 to MP4 by timeout
+        long curTime = rtpTimeoutStopWatch.getTime(TimeUnit.SECONDS);
+        long rtpTimeout = AppInstance.getInstance().getConfigManager().getRtpTimeout();
+        if (rtpTimeout > 0 && !rtspUnit.isRecvData() && curTime >= rtpTimeout) {
+            File m3u8File = new File(rtspUnit.getM3u8FilePath());
+            if (!m3u8File.exists()) {
+                return;
+            }
+
+            ffmpegManager.convertM3u8ToMp4(
+                    rtspUnit.getM3u8FilePath(),
+                    rtspUnit.getMp4FilePath()
+            );
+
+            /*String curTsFileName = rtspUnit.getTsFilePath();
+            curTsFileName = String.format(curTsFileName, fileManager.getTsFileIndex());
+            ffmpegManager.convertTsToMp4(
+                    curTsFileName,
+                    rtspUnit.getTempFileRootPath() + rtspUnit.getFileNameOnly() + fileManager.getTsFileIndex() + ".mp4"
+            );*/
+
+            rtspUnit.setCompleted(true);
+
+            GuiManager.getInstance().getVideoPanel().initMediaPlayer(rtspUnit.getMp4FilePath());
+            GuiManager.getInstance().getVideoPanel().getMediaPlayer().play();
+
+            return;
+        }
+        //
+
+        byte[] data = rtspUnit.poll();
+        if (data == null || data.length <= 0) {
+            rtspUnit.setRecvData(false);
+            return;
+        }
+        rtspUnit.setRecvData(true);
+
         // M3U8 먼저 도착(UDP, paylaod 가변), 그리고 TS 파일 수신함(RTP, payload 188)
-        FileManager fileManager = rtspUnit.getFileManager();
         String dataStr = new String(data, StandardCharsets.UTF_8);
 
         // GET M3U8
@@ -83,6 +135,7 @@ public class StreamReceiver extends Job {
                 if (playlist != null) {
                     mediaSegmentList = playlist.mediaSegments();
                     rtspUnit.setTsFileLimit(mediaSegmentList.size());
+                    logger.debug("({}) ({}) MediaSegmentList: {}", getName(), rtspUnit.getSessionId(), mediaSegmentList);
                 }
             } catch (Exception e) {
                 logger.warn("({}) ({}) Fail to get the media segment list. (m3u8FilePath={})", getName(), rtspUnit.getSessionId(), m3u8FileName, e);
@@ -115,6 +168,7 @@ public class StreamReceiver extends Job {
                     logger.warn("({}) ({}) Fail to close the file stream. (path={})", getName(), rtspUnit.getSessionId(), tsFileStream.getFilePath());
                 }
                 logger.debug("({}) ({}) Success to write completely the ts file. (index={}, path={})", getName(), rtspUnit.getSessionId(), tsFileIndex, tsFileStream.getFilePath());
+                //logger.debug("({}) ({}) Total time: {}", getName(), rtspUnit.getSessionId(), ffmpegManager.getFileTime(curTsFileName));
 
                 // 업데이트된 인덱스로 TS 파일 생성
                 tsFileIndex = fileManager.addAndGetTsFileIndex();

@@ -85,6 +85,7 @@ public class RtspRegisterChannelHandler extends SimpleChannelInboundHandler<Data
                     );
 
                     GuiManager.getInstance().getControlPanel().applyRegistrationButtonStatus();
+                    rtspUnit.setRegistered(true);
                     rtspUnit.open();
                 } else if (status == RegisterRtspUnitRes.NOT_AUTHORIZED) { // NOT AUTHORIZED
                     // KEY 를 사용하여 MD5 해싱한 값을 다시 REGISTER 에 담아서 전송
@@ -103,6 +104,7 @@ public class RtspRegisterChannelHandler extends SimpleChannelInboundHandler<Data
                             configManager.getTargetPort(),
                             nonce
                     );
+                    rtspUnit.setRegistered(false);
                 }
             } else if (uRtspHeader.getMessageType() == URtspMessageType.UNREGISTER) {
                 UnRegisterRtspUnitRes unRegisterRtspUnitRes = new UnRegisterRtspUnitRes(data);

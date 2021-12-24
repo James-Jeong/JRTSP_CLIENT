@@ -1,6 +1,7 @@
 package com.rtsp.client.media.netty.handler;
 
 import com.fsm.module.StateHandler;
+import com.rtsp.client.config.ConfigManager;
 import com.rtsp.client.fsm.RtspEvent;
 import com.rtsp.client.fsm.RtspState;
 import com.rtsp.client.gui.GuiManager;
@@ -10,6 +11,7 @@ import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspNettyChannel;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.media.sdp.base.Sdp;
+import com.rtsp.client.service.AppInstance;
 import com.rtsp.client.service.scheduler.schedule.ScheduleManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -18,6 +20,7 @@ import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.rtsp.RtspHeaderNames;
+import javafx.scene.media.MediaPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,14 +51,20 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
         this.listenIp = listenIp;
         this.listenRtspPort = listenRtspPort;
 
-        ScheduleManager.getInstance().initJob("VIDEO_PLAY", 1, 1);
+        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+        ScheduleManager.getInstance().initJob(
+                "VIDEO_PLAY",
+                configManager.getStreamThreadPoolSize(),
+                configManager.getStreamThreadPoolSize()
+        );
+
         videoPlayJob = new StreamReceiver(
                 StreamReceiver.class.getSimpleName() + "_" + rtspUnitId,
                 1, 1, TimeUnit.MILLISECONDS,
                 1, 1, true
         );
 
-        logger.debug("({}) RtspChannelHandler is created. (listenIp={}, listenRtspPort={})", name, listenIp, listenRtspPort);
+        //logger.debug("({}) RtspChannelHandler is created. (listenIp={}, listenRtspPort={})", name, listenIp, listenRtspPort);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -227,6 +236,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
 
                         if (res.status().code() == HttpResponseStatus.OK.code()) {
                             rtspUnit.setPaused(false);
+                            rtspUnit.setCompleted(false);
 
                             String range = res.headers().get(RtspHeaderNames.RANGE);
                             logger.debug("({}) ({}) range: {}", name, rtspUnit.getRtspUnitId(), range);
@@ -260,7 +270,14 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                         logger.debug("({}) ({}) () < PAUSE {}", name, rtspUnit.getRtspUnitId(), res);
                         if (res.status().code() == HttpResponseStatus.OK.code()) {
                             rtspUnit.setPaused(true);
+
+                            MediaPlayer mediaPlayer = GuiManager.getInstance().getVideoPanel().getMediaPlayer();
+                            if (mediaPlayer != null) {
+                                mediaPlayer.pause();
+                            }
+
                             GuiManager.getInstance().getControlPanel().applyPauseButtonStatus();
+                            RtspManager.getInstance().clearRtspUnit(false, false);
                         } else {
                             logger.warn("({}) ({}) () Fail to process PAUSE. Status code is not HttpResponseStatus.OK.code(). (code={})", name, rtspUnit.getRtspUnitId(), res.status().code());
                             rtspStateHandler.fire(
@@ -281,10 +298,18 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                     case RtspState.STOP:
                         logger.debug("({}) ({}) () < TEARDOWN {}", name, rtspUnit.getRtspUnitId(), res);
                         if (res.status().code() == HttpResponseStatus.OK.code()) {
+                            MediaPlayer mediaPlayer = GuiManager.getInstance().getVideoPanel().getMediaPlayer();
+                            if (mediaPlayer != null) {
+                                mediaPlayer.stop();
+                                mediaPlayer.dispose();
+                                GuiManager.getInstance().getVideoPanel().initMediaView();
+                            }
+
                             ScheduleManager.getInstance().stopJob("VIDEO_PLAY", videoPlayJob);
+                            rtspUnit.setCompleted(true);
 
                             GuiManager.getInstance().getControlPanel().applyStopButtonStatus();
-                            RtspManager.getInstance().clearRtspUnit(false);
+                            RtspManager.getInstance().clearRtspUnit(true, false);
                         } else {
                             logger.warn("({}) ({}) () Fail to process STOP. Status code is not HttpResponseStatus.OK.code(). (code={})", name, rtspUnit.getRtspUnitId(), res.status().code());
                             rtspStateHandler.fire(
@@ -305,7 +330,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        logger.warn("({}) RtspChannelHandler is inactive.", name);
+        //logger.warn("({}) RtspChannelHandler is inactive.", name);
     }
 
     @Override

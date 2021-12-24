@@ -81,7 +81,7 @@ public class TsPacket {
     // 11 : 유효 필드 O, 페이로드 O         00 : 유효 필드 X, 페이로드 X
     private int adaptationFieldControl = 0;                     // 2 bits
     // 동일 PID TS 패킷 전송 시 각 TS 패킷 마다 값을 1씩 증가 시킴으로써, 패킷 수신 시 연속된 데이터인지 판단할 수 있는 지표
-    private int continuityCounter = 0;                          // 16 bits
+    private int continuityCounter = 0;                          // 4 bits
     /** TS Packet Header Field END */
 
     /** Adaptation Field (adaptationFieldControl 이 10 또는 11일 때 존재) */

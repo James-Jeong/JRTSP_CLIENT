@@ -83,9 +83,48 @@ public class FfmpegManager {
             }
             executor.createJob(builder).run();
         } catch (Exception e) {
-            logger.error("FfmpegManager.convertTsToMp4>Exception ", e);
+            logger.error("FfmpegManager.convertM3u8ToMp4.Exception ", e);
+        }
+    }
+
+    public void convertTsToMp4(String srcFilePath, String destFilePath) {
+        String destFilePathOnly = destFilePath.substring(
+                0,
+                destFilePath.lastIndexOf("/")
+        );
+
+        File destFilePathOnlyFile = new File(destFilePathOnly);
+        if (destFilePathOnlyFile.mkdirs()) {
+            logger.debug("Success to make the directory. ({})", destFilePathOnly);
         }
 
+        try {
+            ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+            if (ffmpeg == null) {
+                ffmpeg = new FFmpeg(configManager.getFfmpegPath());
+            }
+
+            if (ffprobe == null) {
+                ffprobe = new FFprobe(configManager.getFfprobePath());
+            }
+
+            FFmpegBuilder builder = new FFmpegBuilder()
+                    .overrideOutputFiles(true)
+                    .setInput(srcFilePath)
+                    .addOutput(destFilePath)
+                    .setFormat("mp4")
+
+                    .addExtraArgs("-acodec", "copy")
+                    .addExtraArgs("-vcodec", "copy")
+                    .done();
+
+            if (executor == null) {
+                executor = new FFmpegExecutor(ffmpeg, ffprobe);
+            }
+            executor.createJob(builder).run();
+        } catch (Exception e) {
+            logger.error("FfmpegManager.convertTsToMp4>Exception ", e);
+        }
     }
 
 }

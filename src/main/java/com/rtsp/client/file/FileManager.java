@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -167,10 +168,11 @@ public class FileManager {
             return tsFileStream;
         }
 
+        tsFileStream = new FileStream(tsFilePath, limitDataSize);
+        tsFileStream.createFile(true);
+
         tsFileListLock.lock();
         try {
-            tsFileStream = new FileStream(tsFilePath, limitDataSize);
-            tsFileStream.createFile(true);
             tsFileMap.put(tsFileIndex, tsFileStream);
         } catch (Exception e) {
             logger.warn("({}) Fail to put the tsFilePath. (index={}, path={})", rtspUnitId, tsFileIndex, tsFilePath, e);
@@ -188,10 +190,10 @@ public class FileManager {
             logger.warn("({}) Fail to remove the tsFilePath. Not exists. (index={})", rtspUnitId, tsFileIndex);
             return;
         }
+        fileStream.removeFile();
 
         tsFileListLock.lock();
         try {
-            fileStream.removeFile();
             tsFileMap.remove(tsFileIndex);
         } catch (Exception e) {
             logger.warn("({}) Fail to remove the tsFilePath. (index={})", rtspUnitId, tsFileIndex, e);
@@ -201,6 +203,16 @@ public class FileManager {
     }
 
     private void removeAllTsFilePathsFromList() {
+        for (Map.Entry<Integer, FileStream> entry : tsFileMap.entrySet()) {
+            if (entry == null) { continue; }
+            logger.debug("entry: [{}:{}]", entry.getKey(), entry.getValue());
+
+            FileStream fileStream = entry.getValue();
+            if (fileStream != null) {
+                fileStream.removeFile();
+            }
+        }
+
         tsFileMap.entrySet().removeIf(Objects::nonNull);
         tsFileIndex.set(0);
     }

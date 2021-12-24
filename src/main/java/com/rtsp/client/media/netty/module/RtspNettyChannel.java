@@ -55,7 +55,7 @@ public class RtspNettyChannel { // > TCP
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public void run (String ip, int port) {
+    public void run () {
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
 
         eventLoopGroup = new NioEventLoopGroup(configManager.getStreamThreadPoolSize());
@@ -74,8 +74,8 @@ public class RtspNettyChannel { // > TCP
                         pipeline.addLast(
                                 new RtspChannelInboundHandler(
                                         rtspUnitId,
-                                        ip,
-                                        port
+                                        listenIp,
+                                        listenPort
                                 )
                         );
                     }

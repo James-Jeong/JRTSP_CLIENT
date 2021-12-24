@@ -18,23 +18,12 @@ public class ControlPanel extends JPanel {
     private final JButton uploadButton = new JButton(ButtonType.UPLOAD);
     private final JButton clearButton = new JButton(ButtonType.CLEAR);
 
-    private final JLabel iconLabel = new JLabel();
-
     public ControlPanel() {
         GridLayout gridLayout = new GridLayout(6, 1);
         gridLayout.setVgap(10);
         gridLayout.setHgap(5);
         setLayout(gridLayout);
         initButton();
-
-        iconLabel.setIcon(null);
-        iconLabel.setText("IMAGE");
-        this.add(iconLabel);
-        iconLabel.setEnabled(true);
-    }
-
-    public JLabel getIconLabel() {
-        return iconLabel;
     }
 
     public void initButton() {
@@ -130,7 +119,7 @@ public class ControlPanel extends JPanel {
         playButton.setEnabled(true);
         pauseButton.setEnabled(false);
         stopButton.setEnabled(false);
-        finishButton.setEnabled(false);
+        finishButton.setEnabled(true);
         unregisterButton.setEnabled(!GuiManager.getInstance().isUploaded());
         uploadButton.setEnabled(false);
         clearButton.setEnabled(GuiManager.getInstance().isUploaded());
