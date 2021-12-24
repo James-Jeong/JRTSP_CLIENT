@@ -5,8 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -19,7 +18,7 @@ public class FileManager {
     private FileStream m3u8File = null;
     private final ReentrantLock m3u8FileLock = new ReentrantLock();
 
-    private final LinkedHashMap<Integer, FileStream> tsFileList = new LinkedHashMap<>();
+    private final LinkedHashMap<Integer, FileStream> tsFileMap = new LinkedHashMap<>();
     private final ReentrantLock tsFileListLock = new ReentrantLock();
     private final AtomicInteger tsFileIndex = new AtomicInteger(0);
 
@@ -172,7 +171,7 @@ public class FileManager {
         try {
             tsFileStream = new FileStream(tsFilePath, limitDataSize);
             tsFileStream.createFile(true);
-            tsFileList.put(tsFileIndex, tsFileStream);
+            tsFileMap.put(tsFileIndex, tsFileStream);
         } catch (Exception e) {
             logger.warn("({}) Fail to put the tsFilePath. (index={}, path={})", rtspUnitId, tsFileIndex, tsFilePath, e);
             return null;
@@ -193,7 +192,7 @@ public class FileManager {
         tsFileListLock.lock();
         try {
             fileStream.removeFile();
-            tsFileList.remove(tsFileIndex);
+            tsFileMap.remove(tsFileIndex);
         } catch (Exception e) {
             logger.warn("({}) Fail to remove the tsFilePath. (index={})", rtspUnitId, tsFileIndex, e);
         } finally {
@@ -202,38 +201,12 @@ public class FileManager {
     }
 
     private void removeAllTsFilePathsFromList() {
-        Set<Map.Entry<Integer, FileStream>> entrySet = tsFileList.entrySet();
-        if (entrySet.isEmpty()) {
-            return;
-        }
-
-        tsFileListLock.lock();
-        try {
-            for (Map.Entry<Integer, FileStream> entry : entrySet) {
-                if (entry == null) {
-                    continue;
-                }
-
-                FileStream fileStream = entry.getValue();
-                if (fileStream == null) {
-                    logger.warn("({}) Fail to remove the ts file. Index is not defined. (index={})", rtspUnitId, tsFileIndex);
-                    continue;
-                }
-
-                fileStream.removeFile();
-                tsFileList.remove(entry.getKey());
-            }
-
-            tsFileIndex.set(0);
-        } catch (Exception e) {
-            logger.warn("({}) Fail to remove the tsFilePath. (index={})", rtspUnitId, tsFileIndex, e);
-        } finally {
-            tsFileListLock.unlock();
-        }
+        tsFileMap.entrySet().removeIf(Objects::nonNull);
+        tsFileIndex.set(0);
     }
 
     private FileStream getTsFileStreamFromList(int tsFileIndex) {
-        return tsFileList.get(tsFileIndex);
+        return tsFileMap.get(tsFileIndex);
     }
 
     ////////////////////////////////////////////////////////////////////////////////

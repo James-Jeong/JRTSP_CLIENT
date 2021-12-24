@@ -106,10 +106,6 @@ public class FileStream {
     }
 
     public boolean closeFileStream() {
-        if (fileOutputStream == null) {
-            return false;
-        }
-
         try {
             fileStreamLock.lock();
 
