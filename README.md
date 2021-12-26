@@ -7,7 +7,7 @@ RTSP Client for JRTSP Server
 ![스크린샷 2021-12-24 오전 8 02 05](https://user-images.githubusercontent.com/37236920/147298091-427b3005-7b28-4c9e-b867-2205737c6a41.png)
   
 ### FSM
-![스크린샷 2021-12-24 오전 9 20 31](https://user-images.githubusercontent.com/37236920/147301460-5f80193b-9783-49ed-829f-84a5d95dc872.png)
+![스크린샷 2021-12-27 오전 8 47 21](https://user-images.githubusercontent.com/37236920/147422663-0b39a971-c62f-4e53-9fcc-579808fae6b5.png)
   
 ### 기능별 Flow
 ![스크린샷 2021-12-24 오전 7 54 56](https://user-images.githubusercontent.com/37236920/147297753-5459b163-5bb6-4a3d-86b4-0a91954db62e.png)
