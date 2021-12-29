@@ -29,10 +29,10 @@ public class VideoPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(MediaPanel.class);
 
     private final JFXPanel vFXPanel = new JFXPanel();
-
-    private Media media;
     private MediaPlayer mediaPlayer;
     private MediaView mediaView;
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     public VideoPanel() {
         this.setLayout(new BorderLayout());
@@ -40,6 +40,8 @@ public class VideoPanel extends JPanel {
 
         initMediaView();
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     public void initMediaView() {
         mediaView = new MediaView();
@@ -63,7 +65,7 @@ public class VideoPanel extends JPanel {
     public void initMediaPlayer(String path) {
         File videoFile = new File(path);
         if (videoFile.exists() && videoFile.isFile()) {
-            media = new Media(videoFile.toURI().toString());
+            Media media = new Media(videoFile.toURI().toString());
             mediaPlayer = new MediaPlayer(media);
 
             GuiManager guiManager = GuiManager.getInstance();
@@ -119,6 +121,8 @@ public class VideoPanel extends JPanel {
             logger.warn("Fail to init media player. Video file is not exist or not file. (path={})", path);
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     public MediaPlayer getMediaPlayer() {
         return mediaPlayer;

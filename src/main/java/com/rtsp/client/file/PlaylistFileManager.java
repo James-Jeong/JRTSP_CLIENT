@@ -57,8 +57,18 @@ public class PlaylistFileManager {
         playlistFile = null;
     }
 
-    public boolean writePlaylistFile(byte[] data) {
-        if (data == null || data.length == 0 || playlistFile == null) { return false; }
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public boolean writeUriToPlaylistFile(byte[] data) {
+        if (playlistFile == null) {
+            logger.warn("Fail to write the data. Playlist file is not defined.");
+            return false;
+        }
+
+        if (data == null || data.length == 0) {
+            logger.warn("Fail to write the data. Data is null.");
+            return false;
+        }
 
         try {
             return playlistFile.writeFileStream(data);
@@ -68,10 +78,16 @@ public class PlaylistFileManager {
         }
     }
 
-    public List<String> readPlaylistFile() {
+    public List<String> readUriFromPlaylistFile() {
         if (playlistFile == null) { return Collections.emptyList(); }
 
         return playlistFile.readFileStreamToLine();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public String getPlaylistFilePath() {
+        return playlistFile.getFilePath();
     }
 
 }

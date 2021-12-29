@@ -25,10 +25,8 @@ public class GuiManager {
         videoPanel = new VideoPanel();
         videoControlPanel = new VideoControlPanel();
         videoPanel.add(videoControlPanel, BorderLayout.SOUTH);
-
         controlPanel = new ControlPanel();
         playlistPanel = new PlaylistPanel();
-
         uriPanel = new UriPanel();
     }
 

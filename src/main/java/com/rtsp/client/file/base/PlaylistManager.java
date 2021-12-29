@@ -14,13 +14,13 @@ public class PlaylistManager {
     private static final Logger log = LoggerFactory.getLogger(PlaylistManager.class);
 
     private static final String RECENT_PLAYLIST_PATH = System.getProperty("user.dir") + "/src/main/resources/playlist/";
-    private static final String RECENT_PLAYLIST_FILE_PATH = RECENT_PLAYLIST_PATH + "recent.playlist";
+    private static final String RECENT_PLAYLIST_FILE_PATH = RECENT_PLAYLIST_PATH + "playlist.txt";
 
     private final PlaylistFileManager playListFileManager = new PlaylistFileManager();
-
     private final HashMap<Integer, String> playlistMap;
-
     private final int playlistMaxSize;
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     public PlaylistManager(int playlistMaxSize) {
         this.playlistMap = new HashMap<>();
@@ -28,42 +28,55 @@ public class PlaylistManager {
         playListFileManager.createPlaylistFile(RECENT_PLAYLIST_FILE_PATH);
     }
 
-    public void stopPlaylist() {
-        playListFileManager.openPlaylistFile();
-
-        StringBuilder stringBuilder = new StringBuilder();
-
-        if (playlistMap.isEmpty()) {
-            return;
-        }
-        playlistMap.keySet().stream().sorted().forEach(key -> stringBuilder.append(playlistMap.get(key)+"\n") );
-        playListFileManager.writePlaylistFile(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
-
-        playListFileManager.closePlaylistFile();
-    }
-
+    ////////////////////////////////////////////////////////////////////////////////
 
     public Map<Integer, String> startPlaylist() {
-        List<String> playlist = playListFileManager.readPlaylistFile();
-
+        List<String> playlist = playListFileManager.readUriFromPlaylistFile();
         if (playlist.isEmpty()) {
+            log.warn("Fail to start playlistFileManager. Playlist is empty.");
             return playlistMap;
         }
 
         playlistMap.clear();
         int index = 0;
         for (String value : playlist) {
-            if (index >= playlistMaxSize) {
-                break;
-            }
+            if (index >= playlistMaxSize) {break;}
             playlistMap.put(index++, value);
         }
 
         return playlistMap;
     }
 
+    public void stopPlaylist() {
+        if (playListFileManager.openPlaylistFile()) {
+            if (playlistMap.isEmpty()) {return;}
+            log.debug("Success to open the playlist file. (path={})", playListFileManager.getPlaylistFilePath());
+
+            StringBuilder stringBuilder = new StringBuilder();
+            playlistMap.keySet().stream().sorted().forEach(key -> stringBuilder.append(playlistMap.get(key)).append("\n"));
+
+            if (playListFileManager.writeUriToPlaylistFile(stringBuilder.toString().getBytes(StandardCharsets.UTF_8))) {
+                log.debug("Success to apply the playlist. (content=\n{})", stringBuilder);
+            }
+
+            if (playListFileManager.closePlaylistFile()) {
+                log.debug("Success to close the playlist file. (path={})", playListFileManager.getPlaylistFilePath());
+            }
+        } else {
+            log.warn("Fail to open the playlist file. (path={})", playListFileManager.getPlaylistFilePath());
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+
     public void addPlaylist(int index, String data){
-        if (index >= playlistMaxSize || index < 0 || data.length() == 0) {
+        if (index < 0 || index >= playlistMaxSize) {
+            log.warn("Fail to add the data. Index is wrong. (index={})", index);
+            return;
+        }
+
+        if (data == null || data.length() == 0) {
+            log.warn("Fail to add the data. Data is null.");
             return;
         }
 
@@ -139,6 +152,8 @@ public class PlaylistManager {
             }
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     public Map<Integer, String> getPlaylistMap() {
         return playlistMap;
