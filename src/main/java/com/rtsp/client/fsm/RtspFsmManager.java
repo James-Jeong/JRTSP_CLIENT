@@ -169,7 +169,7 @@ public class RtspFsmManager {
         // TEARDOWN
         HashSet<String> stopPrevStateSet = new HashSet<>(
                 Arrays.asList(
-                        RtspState.PLAY, RtspState.PAUSE
+                        RtspState.SDP_READY, RtspState.PLAY, RtspState.PAUSE
                 )
         );
         rtspStateHandler.addState(

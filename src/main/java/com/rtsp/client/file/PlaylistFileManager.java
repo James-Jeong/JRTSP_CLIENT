@@ -1,0 +1,77 @@
+package com.rtsp.client.file;
+
+import com.rtsp.client.file.base.FileStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.List;
+
+public class PlaylistFileManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(PlaylistFileManager.class);
+
+    private FileStream playlistFile = null;
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public PlaylistFileManager() {
+        // nothing
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public void createPlaylistFile(String recentPlaylistFilePath) {
+        if (recentPlaylistFilePath == null || recentPlaylistFilePath.length() == 0) { return; }
+
+        try {
+            playlistFile = new FileStream(recentPlaylistFilePath, 0);
+            playlistFile.createFile(false);
+        } catch (Exception e) {
+            logger.warn("({}) Fail to create the recent playlist file. (path={})", recentPlaylistFilePath, e);
+        }
+    }
+
+    public boolean openPlaylistFile() {
+        if (playlistFile == null) {
+            return false;
+        }
+
+        return playlistFile.openFileStream(playlistFile.getFile(), false);
+    }
+
+    public boolean closePlaylistFile() {
+        if (playlistFile == null) {
+            return false;
+        }
+
+        return playlistFile.closeFileStream();
+    }
+
+    public void removePlaylistFile() {
+        if (playlistFile == null) {
+            return;
+        }
+
+        playlistFile.removeFile();
+        playlistFile = null;
+    }
+
+    public boolean writePlaylistFile(byte[] data) {
+        if (data == null || data.length == 0 || playlistFile == null) { return false; }
+
+        try {
+            return playlistFile.writeFileStream(data);
+        } catch (Exception e) {
+            logger.warn("({}) Fail to write the recent playlist file. (path={})", playlistFile.getFilePath(), e);
+            return false;
+        }
+    }
+
+    public List<String> readPlaylistFile() {
+        if (playlistFile == null) { return Collections.emptyList(); }
+
+        return playlistFile.readFileStreamToLine();
+    }
+
+}

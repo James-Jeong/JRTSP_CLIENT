@@ -68,12 +68,7 @@ public class FfmpegManager {
                 ffprobe = new FFprobe(configManager.getFfprobePath());
             }
 
-            FFmpegBuilder builder = new FFmpegBuilder()
-                    .overrideOutputFiles(true)
-                    .setInput(srcFilePath)
-                    .addOutput(destFilePath)
-                    .setFormat("mp4")
-
+            FFmpegBuilder builder = new FFmpegBuilder().overrideOutputFiles(true).setInput(srcFilePath).addOutput(destFilePath).setFormat("mp4")
                     .addExtraArgs("-bsf:a", BITSTREAM_FILTER)
                     .addExtraArgs("-c", C_CODEC)
                     .done();

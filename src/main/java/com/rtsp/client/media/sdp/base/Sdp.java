@@ -225,20 +225,6 @@ public class Sdp {
         return mediaFactory.getMediaField().getMediaPort();
     }
 
-    public void setAmfMediaPort (String mediaType, int port) {
-        if (mediaType == null || port <= 0) {
-            return;
-        }
-
-        MediaFactory mediaFactory = this.mediaDescriptionFactory.getMediaFactory(mediaType);
-        if (mediaFactory == null) {
-            return;
-        }
-
-        mediaFactory.setAmfMediaPort(port);
-        logger.debug("({}) () () Amf media port is set-up. ({})", id, mediaFactory.getAmfMediaPort());
-    }
-
     public void setMediaPortByOtherSdp (String mediaType, Sdp otherSdp) {
         if (mediaType == null || otherSdp == null) {
             return;

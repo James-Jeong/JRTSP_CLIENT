@@ -16,6 +16,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,6 @@ public class VideoPanel extends JPanel {
     public VideoPanel() {
         this.setLayout(new BorderLayout());
         this.add(vFXPanel, BorderLayout.CENTER);
-        vFXPanel.setVisible(true);
 
         initMediaView();
     }
@@ -65,10 +65,18 @@ public class VideoPanel extends JPanel {
         if (videoFile.exists() && videoFile.isFile()) {
             media = new Media(videoFile.toURI().toString());
             mediaPlayer = new MediaPlayer(media);
+
+            GuiManager guiManager = GuiManager.getInstance();
+            VideoControlPanel videoControlPanel = guiManager.getVideoControlPanel();
+
             mediaPlayer.setOnEndOfMedia(() -> {
-                if (GuiManager.getInstance().isUploaded()) {
-                    GuiManager.getInstance().getVideoPanel().getMediaPlayer().stop();
-                    GuiManager.getInstance().getControlPanel().applyStopButtonStatus();
+                videoControlPanel.setVideoProgressBar(1.0);
+                mediaPlayer.seek(new Duration(0));
+                videoControlPanel.setVideoProgressBar(0.0);
+
+                if (guiManager.isUploaded()) {
+                    guiManager.getVideoPanel().getMediaPlayer().stop();
+                    guiManager.getControlPanel().applyStopButtonStatus();
                     return;
                 }
 
@@ -92,6 +100,19 @@ public class VideoPanel extends JPanel {
                     }
                 }
             });
+
+            mediaPlayer.setOnReady(() -> {
+                mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
+                    double curTime = mediaPlayer.getCurrentTime().toSeconds();
+                    double totalTime = mediaPlayer.getTotalDuration().toSeconds();
+                    double timeRate = curTime / totalTime;
+
+                    videoControlPanel.setVideoProgressBar(timeRate);
+                    videoControlPanel.setVideoStatus((int) curTime, (int) totalTime);
+                });
+            });
+            videoControlPanel.setVolumeSlider();
+
             mediaView.setMediaPlayer(mediaPlayer);
             logger.debug("Success to init media player. (path={})", path);
         } else {

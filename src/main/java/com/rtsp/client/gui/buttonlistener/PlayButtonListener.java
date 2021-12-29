@@ -34,6 +34,18 @@ public class PlayButtonListener implements ActionListener {
             return;
         }
 
+        // GET URI FROM INPUT TEXT
+        String uri = GuiManager.getInstance().getSelectPlaylist();
+        if (uri == null || uri.length() == 0) {
+            uri = GuiManager.getInstance().getUriPanel().getUriTextField().getText();
+            if (uri == null || uri.length() == 0) {
+                logger.warn("Fail to get the URI. Cannot process the play request. (uri=[{}])", uri);
+                return;
+            }
+        }
+
+        GuiManager.getInstance().getVideoControlPanel().setVideoProgressBar(-1.0);
+
         // Send PLAY
         RtspUnit rtspUnit = RtspManager.getInstance().getRtspUnit();
         if (rtspUnit == null) {
@@ -73,6 +85,8 @@ public class PlayButtonListener implements ActionListener {
                 }
             }
         } else {
+            rtspUnit.setUri(RtspManager.convertLocalPathToRtspPath(uri));
+
             if (rtspNettyChannel != null) {
                 Random random = new Random();
                 long sessionId = random.nextInt(RtspUnit.MAX_SESSION_ID);

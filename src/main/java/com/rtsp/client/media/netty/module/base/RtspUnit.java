@@ -4,7 +4,7 @@ import com.fsm.StateManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.rtsp.client.config.ConfigManager;
-import com.rtsp.client.file.FileManager;
+import com.rtsp.client.file.RtspFileManager;
 import com.rtsp.client.fsm.RtspFsmManager;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspNettyChannel;
@@ -12,11 +12,13 @@ import com.rtsp.client.media.sdp.SdpParser;
 import com.rtsp.client.media.sdp.base.Sdp;
 import com.rtsp.client.service.AppInstance;
 import com.rtsp.client.service.base.ConcurrentCyclicFIFO;
+import io.lindstrom.m3u8.model.MediaSegment;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,8 +30,9 @@ public class RtspUnit {
     private static final Logger logger = LoggerFactory.getLogger(RtspUnit.class);
 
     public static final int MAX_SESSION_ID = 100000;
+    public static final String VIDEO_JOB_KEY = "VIDEO_PLAY";
 
-    private final String uri;
+    private String uri = null;
     private final String rtspUnitId; // ID of the RTSP session
     private long sessionId; // ID of the session
     private final SdpParser sdpParser = new SdpParser();
@@ -56,35 +59,54 @@ public class RtspUnit {
     private final StopWatch rtpTimeoutStopWatch = new StopWatch();
     private boolean isStarted = false;
     private boolean isPaused = false;
-    private boolean isCompleted = false;
     private boolean isRegistered = false;
-    private boolean isRecvData = false;
 
-    private final ConcurrentCyclicFIFO<byte[]> readBuffer = new ConcurrentCyclicFIFO<>();
+    private final ConcurrentCyclicFIFO<byte[]> m3u8ReadBuffer = new ConcurrentCyclicFIFO<>();
+    private final ConcurrentCyclicFIFO<byte[]> tsReadBuffer = new ConcurrentCyclicFIFO<>();
 
-    private final FileManager fileManager;
-    private final String fileNameOnly;
-    private final String tempFileRootPath;
-    private final String m3u8FilePath;
-    private final String tsFilePath;
-    private final String mp4FilePath;
+    private final RtspFileManager fileManager;
+    private String fileNameOnly;
+    private String tempFileRootPath;
+    private String m3u8FilePath;
+    private String tsFilePath;
+    private String mp4FilePath;
     private int tsFileLimit = 0;
+    private List<MediaSegment> mediaSegmentList = null;
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public RtspUnit(String targetIp, int targetPort, String uri) {
-        this.uri = uri;
+    public RtspUnit(String targetIp, int targetPort) {
         this.rtspUnitId = UUID.randomUUID().toString();
         this.rtspStateUnitId = UUID.randomUUID().toString();
         this.targetIp = targetIp;
         this.targetPort = targetPort;
-        this.fileManager = new FileManager(rtspUnitId);
+        this.fileManager = new RtspFileManager(rtspUnitId);
         rtspFsmManager.init(this);
+
+        logger.debug("({}) RtspUnit is created. (stateUnitId={}, targetIp={}, targetPort={})", rtspUnitId, rtspStateUnitId, targetIp, targetPort);
+    }
+
+    public void open() {
+        rtspChannel = NettyChannelManager.getInstance().openRtspChannel(
+                rtspUnitId,
+                targetIp,
+                targetPort
+        );
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
 
         fileNameOnly = fileManager.getFileNameExceptForExtension(uri);
 
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-        this.tempFileRootPath = configManager.getTempRootPath() + fileNameOnly + "_tmp";
+        tempFileRootPath = configManager.getTempRootPath() + fileNameOnly + "_tmp";
         File tempRootPathDirectory = new File(tempFileRootPath);
         if (!tempRootPathDirectory.exists()) {
             if (tempRootPathDirectory.mkdirs()) {
@@ -92,30 +114,17 @@ public class RtspUnit {
             }
         }
 
-        this.m3u8FilePath = tempFileRootPath + fileNameOnly + ".m3u8";
-        this.tsFilePath = tempFileRootPath + fileNameOnly + "%d.ts";
-        this.mp4FilePath = tempFileRootPath + fileNameOnly + ".mp4";;
-
-        logger.debug("({}) RtspUnit is created. (m3u8FilePath={}, tsFilePath={})", rtspUnitId, m3u8FilePath, tsFilePath);
+        m3u8FilePath = tempFileRootPath + fileNameOnly + ".m3u8";
+        tsFilePath = tempFileRootPath + fileNameOnly + "%d.ts";
+        mp4FilePath = tempFileRootPath + fileNameOnly + ".mp4";;
     }
 
-    public void open() {
-        rtspChannel = NettyChannelManager.getInstance().openRtspChannel(
-                rtspUnitId,
-                targetIp,
-                targetPort,
-                uri
-        );
+    public List<MediaSegment> getMediaSegmentList() {
+        return mediaSegmentList;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public boolean isRecvData() {
-        return isRecvData;
-    }
-
-    public void setRecvData(boolean recvData) {
-        isRecvData = recvData;
+    public void setMediaSegmentList(List<MediaSegment> mediaSegmentList) {
+        this.mediaSegmentList = mediaSegmentList;
     }
 
     public StopWatch getRtpTimeoutStopWatch() {
@@ -130,10 +139,6 @@ public class RtspUnit {
         isStarted = started;
     }
 
-    public String getUri() {
-        return uri;
-    }
-
     public String getMp4FilePath() {
         return mp4FilePath;
     }
@@ -144,14 +149,6 @@ public class RtspUnit {
 
     public void setRegistered(boolean registered) {
         isRegistered = registered;
-    }
-
-    public boolean isCompleted() {
-        return isCompleted;
-    }
-
-    public void setCompleted(boolean completed) {
-        isCompleted = completed;
     }
 
     public int getTsFileLimit() {
@@ -178,7 +175,7 @@ public class RtspUnit {
         return tsFilePath;
     }
 
-    public FileManager getFileManager() {
+    public RtspFileManager getFileManager() {
         return fileManager;
     }
 
@@ -308,8 +305,12 @@ public class RtspUnit {
             sdp = null;
             startTime = 0.000;
             endTime = 0.000;
+            isStarted = false;
             isPaused = false;
-            isCompleted = false;
+            mediaSegmentList = null;
+            rtpTimeoutStopWatch.reset();
+            m3u8ReadBuffer.clear();
+            tsReadBuffer.clear();
         }
 
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
@@ -354,12 +355,20 @@ public class RtspUnit {
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public void offer(byte[] data) {
-        readBuffer.offer(data);
+    public void offerToM3U8Buffer(byte[] data) {
+        m3u8ReadBuffer.offer(data);
     }
 
-    public byte[] poll() {
-        return readBuffer.poll();
+    public byte[] pollFromM3U8Buffer() {
+        return m3u8ReadBuffer.poll();
+    }
+
+    public void offerToTsBuffer(byte[] data) {
+        tsReadBuffer.offer(data);
+    }
+
+    public byte[] pollFromTsBuffer() {
+        return tsReadBuffer.poll();
     }
 
     ////////////////////////////////////////////////////////////////////////////////

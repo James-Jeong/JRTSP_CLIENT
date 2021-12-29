@@ -31,7 +31,6 @@ public class MediaFactory extends SdpFactory {
     // Optional
     private final List<BandwidthField> bandwidthFieldList = new ArrayList<>();
     private ConnectionField connectionField;
-    private int amfMediaPort = -1;
 
     ////////////////////////////////////////////////////////////////////////////////
 
@@ -128,15 +127,6 @@ public class MediaFactory extends SdpFactory {
     public void setMediaField(MediaField mediaField) {
         this.mediaField = mediaField;
     }
-
-    public int getAmfMediaPort() {
-        return amfMediaPort;
-    }
-
-    public void setAmfMediaPort(int amfMediaPort) {
-        this.amfMediaPort = amfMediaPort;
-    }
-
     ////////////////////////////////////////////////////////////////////////////////
 
     public void addAttributeFactory(AttributeFactory attributeFactory) {

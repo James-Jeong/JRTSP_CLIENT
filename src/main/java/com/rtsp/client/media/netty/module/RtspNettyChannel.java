@@ -40,17 +40,14 @@ public class RtspNettyChannel { // > TCP
     private final String listenIp;
     private final int listenPort;
 
-    private final String uri;
-
     private int seqNum = 1;
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public RtspNettyChannel(String rtspUnitId, String ip, int port, String uri) {
+    public RtspNettyChannel(String rtspUnitId, String ip, int port) {
         this.rtspUnitId = rtspUnitId;
         this.listenIp = ip;
         this.listenPort = port;
-        this.uri = uri;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +115,7 @@ public class RtspNettyChannel { // > TCP
         try {
             channelFuture = b.connect(address, port).sync();
             channel = channelFuture.channel();
-            logger.debug("Channel is opened. (ip={}, port={})", address, port);
+            //logger.debug("Channel is opened. (ip={}, port={})", address, port);
 
             return channelFuture.channel();
         } catch (Exception e) {
@@ -146,49 +143,55 @@ public class RtspNettyChannel { // > TCP
     }
 
     public void sendOptions(RtspUnit rtspUnit) {
-        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, HttpMethod.OPTIONS, uri);
-        request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
-        request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
-        request.headers().set(RtspHeaderNames.SESSION, String.valueOf(rtspUnit.getSessionId()));
-        sendMessage(request);
-
         StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
         rtspStateHandler.fire(
                 RtspEvent.OPTIONS,
                 rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
         );
+
+        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, HttpMethod.OPTIONS, rtspUnit.getUri());
+        request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
+        request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
+        request.headers().set(RtspHeaderNames.SESSION, String.valueOf(rtspUnit.getSessionId()));
+        sendMessage(request);
     }
 
     public void sendDescribe(RtspUnit rtspUnit) {
-        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.DESCRIBE, uri);
-        request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
-        request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
-        request.headers().set(RtspHeaderNames.ACCEPT, "application/sdp");
-        sendMessage(request);
-
         StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
         rtspStateHandler.fire(
                 RtspEvent.DESCRIBE,
                 rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
         );
+
+        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.DESCRIBE, rtspUnit.getUri());
+        request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
+        request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
+        request.headers().set(RtspHeaderNames.ACCEPT, "application/sdp");
+        sendMessage(request);
     }
 
     public void sendSetup(RtspUnit rtspUnit) {
-        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.SETUP, uri);
-        request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
-        request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
-        request.headers().set(RtspHeaderNames.TRANSPORT, "RTP/AVP;unicast;client_port=" + rtspUnit.getListenRtpPort() + "-" + rtspUnit.getListenRtcpPort());
-        sendMessage(request);
-
         StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
         rtspStateHandler.fire(
                 RtspEvent.SETUP,
                 rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
         );
+
+        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.SETUP, rtspUnit.getUri());
+        request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
+        request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
+        request.headers().set(RtspHeaderNames.TRANSPORT, "RTP/AVP;unicast;client_port=" + rtspUnit.getListenRtpPort() + "-" + rtspUnit.getListenRtcpPort());
+        sendMessage(request);
     }
 
     public void sendPlay(RtspUnit rtspUnit, double startTime, double endTime) {
-        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.PLAY, uri);
+        StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
+        rtspStateHandler.fire(
+                RtspEvent.PLAY,
+                rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
+        );
+
+        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.PLAY, rtspUnit.getUri());
         request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
         request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
         request.headers().set(RtspHeaderNames.SESSION, String.valueOf(rtspUnit.getSessionId()));
@@ -198,40 +201,34 @@ public class RtspNettyChannel { // > TCP
             request.headers().set(RtspHeaderNames.RANGE, "npt=" + String.format("%.3f", startTime) + "-");
         }
         sendMessage(request);
-
-        StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
-        rtspStateHandler.fire(
-                RtspEvent.PLAY,
-                rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
-        );
     }
 
     public void sendPause(RtspUnit rtspUnit) {
-        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.PAUSE, uri);
-        request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
-        request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
-        request.headers().set(RtspHeaderNames.SESSION, String.valueOf(rtspUnit.getSessionId()));
-        sendMessage(request);
-
         StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
         rtspStateHandler.fire(
                 RtspEvent.PAUSE,
                 rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
         );
-    }
 
-    public void sendStop(RtspUnit rtspUnit) {
-        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.TEARDOWN, uri);
+        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.PAUSE, rtspUnit.getUri());
         request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
         request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
         request.headers().set(RtspHeaderNames.SESSION, String.valueOf(rtspUnit.getSessionId()));
         sendMessage(request);
+    }
 
+    public void sendStop(RtspUnit rtspUnit) {
         StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
         rtspStateHandler.fire(
                 RtspEvent.TEARDOWN,
                 rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
         );
+
+        DefaultHttpRequest request = new DefaultHttpRequest(RtspVersions.RTSP_1_0, RtspMethods.TEARDOWN, rtspUnit.getUri());
+        request.headers().set(RtspHeaderNames.CSEQ, String.valueOf(seqNum));
+        request.headers().set(RtspHeaderNames.USER_AGENT, AppInstance.getInstance().getConfigManager().getUserAgent());
+        request.headers().set(RtspHeaderNames.SESSION, String.valueOf(rtspUnit.getSessionId()));
+        sendMessage(request);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -249,7 +246,7 @@ public class RtspNettyChannel { // > TCP
         channel.close();
         channel = null;
         seqNum = 1;
-        logger.debug("Channel is closed.");
+        //logger.debug("Channel is closed.");
     }
 
     public String getListenIp() {

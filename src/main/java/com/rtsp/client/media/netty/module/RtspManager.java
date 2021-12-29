@@ -4,7 +4,6 @@ import com.fsm.module.StateHandler;
 import com.rtsp.client.config.ConfigManager;
 import com.rtsp.client.fsm.RtspEvent;
 import com.rtsp.client.fsm.RtspState;
-import com.rtsp.client.gui.GuiManager;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.service.AppInstance;
@@ -41,13 +40,7 @@ public class RtspManager {
 
     public RtspUnit openRtspUnit(String ip, int port) {
         if (rtspUnit == null) {
-            String uri = GuiManager.getInstance().getUriPanel().getUriTextField().getText();
-            if (uri == null || uri.length() == 0) {
-                log.warn("Fail to get the URI. Cannot open rtsp unit.");
-                return null;
-            }
-
-            rtspUnit = new RtspUnit(ip, port, convertLocalPathToRtspPath(uri));
+            rtspUnit = new RtspUnit(ip, port);
             rtspUnit.getStateManager().addStateUnit(
                     rtspUnit.getRtspStateUnitId(),
                     rtspUnit.getStateManager().getStateHandler(RtspState.NAME).getName(),
@@ -83,6 +76,7 @@ public class RtspManager {
                             RtspEvent.IDLE,
                             rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
                     );
+                    rtspUnit.setRegistered(false);
                 } else {
                     rtspStateHandler.fire(
                             RtspEvent.TEARDOWN_OK,
@@ -101,8 +95,8 @@ public class RtspManager {
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public String convertLocalPathToRtspPath(String localPath) {
-        if (localPath == null || !localPath.startsWith("/")) {
+    public static String convertLocalPathToRtspPath(String localPath) {
+        if (localPath == null || localPath.isEmpty()) {
             return null;
         }
 

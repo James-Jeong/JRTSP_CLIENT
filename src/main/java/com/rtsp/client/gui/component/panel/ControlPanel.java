@@ -19,11 +19,10 @@ public class ControlPanel extends JPanel {
     private final JButton clearButton = new JButton(ButtonType.CLEAR);
 
     public ControlPanel() {
-        GridLayout gridLayout = new GridLayout(6, 1);
+        GridLayout gridLayout = new GridLayout(4, 2);
         gridLayout.setVgap(10);
         gridLayout.setHgap(5);
         setLayout(gridLayout);
-        initButton();
     }
 
     public void initButton() {
@@ -57,6 +56,13 @@ public class ControlPanel extends JPanel {
         finishButton.setEnabled(true);
         uploadButton.setEnabled(true);
         clearButton.setEnabled(false);
+
+        VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
+        videoControlPanel.getPlayButton().setEnabled(false);
+        videoControlPanel.getPauseButton().setEnabled(false);
+        videoControlPanel.getStopButton().setEnabled(false);
+        videoControlPanel.setVideoProgressBar(0.0);
+        videoControlPanel.setVideoStatus(0, 0);
     }
 
     public void applyUploadButtonStatus() {
@@ -68,6 +74,11 @@ public class ControlPanel extends JPanel {
         unregisterButton.setEnabled(false);
         uploadButton.setEnabled(false);
         clearButton.setEnabled(true);
+
+        VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
+        videoControlPanel.getPlayButton().setEnabled(true);
+        videoControlPanel.getPauseButton().setEnabled(false);
+        videoControlPanel.getStopButton().setEnabled(false);
     }
 
     public void applyClearButtonStatus() {
@@ -79,6 +90,13 @@ public class ControlPanel extends JPanel {
         unregisterButton.setEnabled(false);
         uploadButton.setEnabled(true);
         clearButton.setEnabled(false);
+
+        VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
+        videoControlPanel.getPlayButton().setEnabled(false);
+        videoControlPanel.getPauseButton().setEnabled(false);
+        videoControlPanel.getStopButton().setEnabled(false);
+        videoControlPanel.setVideoProgressBar(0.0);
+        videoControlPanel.setVideoStatus(0, 0);
     }
 
     public void applyRegistrationButtonStatus() {
@@ -90,6 +108,11 @@ public class ControlPanel extends JPanel {
         unregisterButton.setEnabled(true);
         uploadButton.setEnabled(false);
         clearButton.setEnabled(false);
+
+        VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
+        videoControlPanel.getPlayButton().setEnabled(true);
+        videoControlPanel.getPauseButton().setEnabled(false);
+        videoControlPanel.getStopButton().setEnabled(false);
     }
 
     public void applyPlayButtonStatus() {
@@ -101,6 +124,11 @@ public class ControlPanel extends JPanel {
         unregisterButton.setEnabled(false);
         uploadButton.setEnabled(false);
         clearButton.setEnabled(false);
+
+        VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
+        videoControlPanel.getPlayButton().setEnabled(false);
+        videoControlPanel.getPauseButton().setEnabled(true);
+        videoControlPanel.getStopButton().setEnabled(true);
     }
 
     public void applyPauseButtonStatus() {
@@ -112,6 +140,11 @@ public class ControlPanel extends JPanel {
         unregisterButton.setEnabled(!GuiManager.getInstance().isUploaded());
         uploadButton.setEnabled(false);
         clearButton.setEnabled(false);
+
+        VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
+        videoControlPanel.getPlayButton().setEnabled(true);
+        videoControlPanel.getPauseButton().setEnabled(false);
+        videoControlPanel.getStopButton().setEnabled(true);
     }
 
     public void applyStopButtonStatus() {
@@ -123,5 +156,10 @@ public class ControlPanel extends JPanel {
         unregisterButton.setEnabled(!GuiManager.getInstance().isUploaded());
         uploadButton.setEnabled(false);
         clearButton.setEnabled(GuiManager.getInstance().isUploaded());
+
+        VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
+        videoControlPanel.getPlayButton().setEnabled(true);
+        videoControlPanel.getPauseButton().setEnabled(false);
+        videoControlPanel.getStopButton().setEnabled(false);
     }
 }

@@ -10,9 +10,9 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class FileManager {
+public class RtspFileManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(RtspFileManager.class);
 
     private final String rtspUnitId;
 
@@ -25,7 +25,7 @@ public class FileManager {
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    public FileManager(String rtspUnitId) {
+    public RtspFileManager(String rtspUnitId) {
         this.rtspUnitId = rtspUnitId;
     }
 
@@ -145,6 +145,10 @@ public class FileManager {
 
     public int getTsFileIndex() {
         return tsFileIndex.get();
+    }
+
+    public void resetTsFileIndex() {
+        tsFileIndex.set(0);
     }
 
     public int getTsFileSize(int tsFileIndex) {

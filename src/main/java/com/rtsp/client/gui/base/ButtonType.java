@@ -10,4 +10,6 @@ public class ButtonType {
     public static final String FINISH = "FINISH";
     public static final String UPLOAD = "UPLOAD";
     public static final String CLEAR = "CLEAR";
+
+    public static final String ADD = "ADD";
 }

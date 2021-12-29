@@ -1,5 +1,6 @@
 package com.rtsp.client.service;
 
+import com.rtsp.client.gui.GuiManager;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,8 @@ public class ServiceManager {
     }
 
     public void stop() {
+
+        GuiManager.getInstance().getPlaylistPanel().savePlaylist();
         // Remove register channel
         NettyChannelManager.getInstance().removeRegisterChannel();
 

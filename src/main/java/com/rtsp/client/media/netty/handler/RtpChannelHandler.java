@@ -53,11 +53,13 @@ public class RtpChannelHandler extends SimpleChannelInboundHandler<DatagramPacke
             buf.getBytes(0, data);
 
             String dataStr = new String(data, StandardCharsets.UTF_8);
-            if (!dataStr.startsWith(StreamReceiver.M3U8_FILE_HEADER)) {
+            if (dataStr.startsWith(StreamReceiver.M3U8_FILE_HEADER)) {
+                rtspUnit.offerToM3U8Buffer(data);
+            } else {
                 RtpPacket rtpPacket = new RtpPacket(data, readBytes);
                 data = rtpPacket.getPayload();
+                rtspUnit.offerToTsBuffer(data);
             }
-            rtspUnit.offer(data);
         } catch (Exception e) {
             logger.warn("RtpChannelHandler.channelRead0.Exception", e);
         }

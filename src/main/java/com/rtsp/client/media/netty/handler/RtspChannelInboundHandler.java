@@ -5,12 +5,14 @@ import com.rtsp.client.config.ConfigManager;
 import com.rtsp.client.fsm.RtspEvent;
 import com.rtsp.client.fsm.RtspState;
 import com.rtsp.client.gui.GuiManager;
+import com.rtsp.client.gui.component.panel.VideoControlPanel;
 import com.rtsp.client.media.module.StreamReceiver;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspNettyChannel;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.media.sdp.base.Sdp;
+import com.rtsp.client.media.sdp.base.attribute.RtpAttribute;
 import com.rtsp.client.service.AppInstance;
 import com.rtsp.client.service.scheduler.schedule.ScheduleManager;
 import io.netty.buffer.ByteBuf;
@@ -21,10 +23,12 @@ import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.rtsp.RtspHeaderNames;
 import javafx.scene.media.MediaPlayer;
+import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -104,16 +108,50 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                     String sdpStr = new String(data, StandardCharsets.UTF_8);
                     if (sdpStr.length() > 0) {
                         if (rtspUnit.parseSdp(sdpStr)) {
-                            Sdp sdp = rtspUnit.getSdp();
-                            logger.debug("({}) ({}) RECV SDP: {}", name, rtspUnitId, sdp.getData(true));
+                            Sdp remoteSdp = rtspUnit.getSdp();
+                            logger.debug("({}) ({}) REMOTE SDP: {}", name, rtspUnitId, remoteSdp.getData(true));
 
-                            int rtpPort = sdp.getMediaPort(Sdp.VIDEO);
+                            int rtpPort = remoteSdp.getMediaPort(Sdp.VIDEO);
                             rtspUnit.setListenRtpPort(rtpPort);
                             rtspUnit.setListenRtcpPort(rtpPort + 1);
 
+                            // TODO : Need to negotiate remote sdp with local sdp
+                            Sdp localSdp = AppInstance.getInstance().getConfigManager().loadLocalSdpConfig(
+                                    rtspUnitId,
+                                    rtspUnit.getListenRtpPort()
+                            );
+                            logger.debug("({}) ({}) LOCAL SDP: {}", name, rtspUnitId, localSdp.getData(true));
+
+                            boolean isCodecMatched = false;
+                            List<RtpAttribute> localCodecList = localSdp.getMediaDescriptionFactory().getMediaFactory(Sdp.VIDEO).getCodecList();
+                            List<RtpAttribute> remoteCodecList = remoteSdp.getMediaDescriptionFactory().getMediaFactory(Sdp.VIDEO).getCodecList();
+                            String localCodecName = null, remoteCodecName = null;
+                            for (RtpAttribute localRtpAttribute : localCodecList) {
+                                localCodecName = localRtpAttribute.getRtpMapAttributeFactory().getCodecName();
+                                if (localCodecName == null) { continue; }
+                                for (RtpAttribute remoteRtpAttribute : remoteCodecList) {
+                                    remoteCodecName = remoteRtpAttribute.getRtpMapAttributeFactory().getCodecName();
+                                    if (localCodecName.equals(remoteCodecName)) {
+                                        logger.debug("({}) ({}) CODEC MATCHED! (local={}, remote={})", name, rtspUnitId, localCodecName, remoteCodecName);
+                                        isCodecMatched = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (!isCodecMatched) {
+                                logger.warn("({}) ({}) () Fail to process DESCRIBE. Fail to negotiate the sdp. (local={}, remote={})", name, rtspUnit.getRtspUnitId(), localCodecName, remoteCodecName);
+                                // Send TEARDOWN
+                                RtspNettyChannel rtspNettyChannel = NettyChannelManager.getInstance().getRtspChannel(rtspUnitId);
+                                if (rtspNettyChannel != null) {
+                                    rtspNettyChannel.sendStop(rtspUnit);
+                                }
+                                return;
+                            }
+
                             // OPEN RTP CHANNEL
                             NettyChannelManager.getInstance().openRtpChannel(rtspUnitId, listenIp, rtpPort);
-                            // TODO OPEN RTCP CHANNEL
+                            // TODO : OPEN RTCP CHANNEL
 
                             RtspNettyChannel rtspNettyChannel = NettyChannelManager.getInstance().getRtspChannel(rtspUnitId);
                             if (rtspNettyChannel != null) {
@@ -236,7 +274,6 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
 
                         if (res.status().code() == HttpResponseStatus.OK.code()) {
                             rtspUnit.setPaused(false);
-                            rtspUnit.setCompleted(false);
 
                             String range = res.headers().get(RtspHeaderNames.RANGE);
                             logger.debug("({}) ({}) range: {}", name, rtspUnit.getRtspUnitId(), range);
@@ -253,8 +290,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                             }
 
                             GuiManager.getInstance().getControlPanel().applyPlayButtonStatus();
-
-                            ScheduleManager.getInstance().startJob("VIDEO_PLAY", videoPlayJob);
+                            ScheduleManager.getInstance().startJob(RtspUnit.VIDEO_JOB_KEY, videoPlayJob);
 
                             logger.debug("({}) ({}) () Success to process PLAY.", name, rtspUnit.getRtspUnitId());
                         } else {
@@ -298,15 +334,19 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                     case RtspState.STOP:
                         logger.debug("({}) ({}) () < TEARDOWN {}", name, rtspUnit.getRtspUnitId(), res);
                         if (res.status().code() == HttpResponseStatus.OK.code()) {
+                            VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
+                            videoControlPanel.setVideoProgressBar(1.0);
+                            videoControlPanel.setVideoProgressBar(0.0);
+
                             MediaPlayer mediaPlayer = GuiManager.getInstance().getVideoPanel().getMediaPlayer();
                             if (mediaPlayer != null) {
+                                mediaPlayer.seek(new Duration(0));
                                 mediaPlayer.stop();
                                 mediaPlayer.dispose();
                                 GuiManager.getInstance().getVideoPanel().initMediaView();
                             }
 
-                            ScheduleManager.getInstance().stopJob("VIDEO_PLAY", videoPlayJob);
-                            rtspUnit.setCompleted(true);
+                            ScheduleManager.getInstance().stopJob(RtspUnit.VIDEO_JOB_KEY, videoPlayJob);
 
                             GuiManager.getInstance().getControlPanel().applyStopButtonStatus();
                             RtspManager.getInstance().clearRtspUnit(true, false);
@@ -319,7 +359,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                         }
                         break;
                     default:
-                        logger.debug("({}) ({}) () < MSG {}", name, rtspUnit.getRtspUnitId(), res);
+                        logger.debug("({}) ({}) () < MSG (curState={}) {}", name, rtspUnit.getRtspUnitId(), curState, res);
                         break;
                 }
             }

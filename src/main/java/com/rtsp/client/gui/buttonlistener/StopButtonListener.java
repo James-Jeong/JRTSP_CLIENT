@@ -4,6 +4,7 @@ import com.fsm.module.StateHandler;
 import com.rtsp.client.fsm.RtspEvent;
 import com.rtsp.client.fsm.RtspState;
 import com.rtsp.client.gui.GuiManager;
+import com.rtsp.client.gui.component.panel.VideoControlPanel;
 import com.rtsp.client.media.netty.NettyChannelManager;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.RtspNettyChannel;
@@ -21,6 +22,10 @@ public class StopButtonListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (GuiManager.getInstance().isUploaded()) {
+            VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
+            videoControlPanel.setVideoProgressBar(1.0);
+            videoControlPanel.setVideoProgressBar(0.0);
+
             GuiManager.getInstance().getVideoPanel().getMediaPlayer().stop();
             GuiManager.getInstance().getControlPanel().applyStopButtonStatus();
             return;

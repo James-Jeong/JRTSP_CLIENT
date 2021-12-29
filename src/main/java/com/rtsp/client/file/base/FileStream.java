@@ -3,8 +3,13 @@ package com.rtsp.client.file.base;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class FileStream {
@@ -169,6 +174,23 @@ public class FileStream {
         }
 
         return true;
+    }
+
+    public List<String> readFileStreamToLine() {
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(ramFile))) {
+            List<String> lines = new ArrayList<>();
+
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                lines.add(line);
+                logger.debug("{}", line);
+            }
+
+            return lines;
+        } catch (Exception e) {
+            logger.warn("Fail to read the filestream. (path={})", filePath, e);
+            return Collections.emptyList();
+        }
     }
 
     public int getTotalDataSize() {

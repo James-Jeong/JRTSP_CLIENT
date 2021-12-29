@@ -34,17 +34,17 @@ public class SdpParser {
      * @param sdpStr sdp message
      * @return Sdp
      */
-    public Sdp parseSdp (String callId, String fromNo, String toNo, String sdpStr) throws Exception {
+    public Sdp parseSdp (String id, String fromNo, String toNo, String sdpStr) throws Exception {
         if (sdpStr == null || sdpStr.length() == 0) {
             return null;
         }
 
-        Sdp sdp = new Sdp(callId);
+        Sdp sdp = new Sdp(id);
 
         SDPAnnounceParser parser = new SDPAnnounceParser(sdpStr);
         SessionDescriptionImpl sdi = parser.parse();
         if (sdi.getVersion().getVersion() != 0) {
-            logger.warn("({}) ({}) ({}) sdp version is not 0. sdp={}", callId, fromNo, toNo, sdpStr);
+            logger.warn("({}) ({}) ({}) sdp version is not 0. sdp={}", id, fromNo, toNo, sdpStr);
             return null;
         }
 
@@ -79,7 +79,7 @@ public class SdpParser {
         // 2) Time Description
         Vector tdVector = sdi.getTimeDescriptions(false);
         if (tdVector == null || tdVector.isEmpty()) {
-            logger.warn("({}) ({}) ({}) sdp hasn't time description. sdp={}", callId, fromNo, toNo, sdpStr);
+            logger.warn("({}) ({}) ({}) sdp hasn't time description. sdp={}", id, fromNo, toNo, sdpStr);
             return null;
         }
 
@@ -109,7 +109,7 @@ public class SdpParser {
         // 3) Media Description
         Vector mdVector = sdi.getMediaDescriptions(false);
         if (mdVector == null || mdVector.isEmpty()) {
-            logger.warn("({}) ({}) ({}) sdp hasn't media description. sdp={}", callId, fromNo, toNo, sdpStr);
+            logger.warn("({}) ({}) ({}) sdp hasn't media description. sdp={}", id, fromNo, toNo, sdpStr);
             return null;
         }
 
@@ -161,7 +161,7 @@ public class SdpParser {
                     // Attributes
                     Vector adVector = md.getAttributes(false);
                     if (adVector == null || adVector.isEmpty()) {
-                        logger.warn("({}) ({}) ({}) sdp hasn't attribute description. sdp={}", callId, fromNo, toNo, sdpStr);
+                        logger.warn("({}) ({}) ({}) sdp hasn't attribute description. sdp={}", id, fromNo, toNo, sdpStr);
                         return null;
                     }
 
@@ -215,7 +215,7 @@ public class SdpParser {
         }
 
         sdp.setMediaDescriptionFactory(mediaDescriptionFactory);
-        logger.debug("({}) ({}) ({}) Media Description=\n{}", callId, fromNo, toNo, sdp.getMediaDescriptionFactory().getData(true));
+        logger.debug("({}) ({}) ({}) Media Description=\n{}", id, fromNo, toNo, sdp.getMediaDescriptionFactory().getData(true));
 
         return sdp;
     }
