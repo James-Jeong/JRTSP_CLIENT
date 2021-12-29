@@ -16,6 +16,24 @@
     <dependencies>
 
         <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mp4parser</groupId>
+            <artifactId>muxer</artifactId>
+            <version>1.9.27</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.bramp.ffmpeg</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>0.6.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.lindstrom</groupId>
             <artifactId>m3u8-parser</artifactId>
             <version>0.19</version>
@@ -46,11 +64,11 @@
         </dependency>
 
         <!-- javax.media -->
-<!--        <dependency>-->
-<!--            <groupId>org.bytedeco</groupId>-->
-<!--            <artifactId>javacv-platform</artifactId>-->
-<!--            <version>1.5.5</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.bytedeco</groupId>-->
+        <!--            <artifactId>javacv-platform</artifactId>-->
+        <!--            <version>1.5.5</version>-->
+        <!--        </dependency>-->
 
         <dependency>
             <groupId>org.ini4j</groupId>
