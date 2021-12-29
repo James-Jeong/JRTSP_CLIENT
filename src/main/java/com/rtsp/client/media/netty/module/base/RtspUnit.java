@@ -103,7 +103,12 @@ public class RtspUnit {
     public void setUri(String uri) {
         this.uri = uri;
 
-        fileNameOnly = fileManager.getFileNameExceptForExtension(uri);
+        String curUri = uri;
+        if (uri.contains("*")) {
+            curUri = uri.replaceAll("[*]", " ");
+        }
+
+        fileNameOnly = fileManager.getFileNameExceptForExtension(curUri);
 
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
         tempFileRootPath = configManager.getTempRootPath() + fileNameOnly + "_tmp";
@@ -331,24 +336,27 @@ public class RtspUnit {
             }
         }
 
+        File tempRootPathDirectory = new File(tempFileRootPath);
         if (configManager.isDeleteM3u8() && configManager.isDeleteTs() && configManager.isDeleteMp4()) {
-            File tempRootPathDirectory = new File(tempFileRootPath);
             if (tempRootPathDirectory.exists()) {
                 if (tempRootPathDirectory.delete()) {
                     logger.debug("({}) The temp root directory is deleted. (path={})", rtspUnitId, tempFileRootPath);
-                } else {
-                    File[] deleteFolderList = tempRootPathDirectory.listFiles();
-                    if (deleteFolderList != null) {
-                        for (File file : deleteFolderList) {
-                            if (file.delete()) {
-                                logger.debug("({}) The temp file is deleted. (path={})", rtspUnitId, file.getAbsolutePath());
-                            }
-                        }
-                    }
-                    if (tempRootPathDirectory.delete()) {
-                        logger.debug("({}) The temp root directory is deleted. (path={})", rtspUnitId, tempFileRootPath);
-                    }
                 }
+            }
+        }
+
+        File[] deleteFolderList = tempRootPathDirectory.listFiles();
+        if (deleteFolderList != null) {
+            for (File file : deleteFolderList) {
+                if (file.delete()) {
+                    logger.debug("({}) The temp file is deleted. (path={})", rtspUnitId, file.getAbsolutePath());
+                }
+            }
+        }
+
+        if (deleteFolderList == null || deleteFolderList.length == 0) {
+            if (tempRootPathDirectory.delete()) {
+                logger.debug("({}) The temp root directory is deleted. (path={})", rtspUnitId, tempFileRootPath);
             }
         }
     }

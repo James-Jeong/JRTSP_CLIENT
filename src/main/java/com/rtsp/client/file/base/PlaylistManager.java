@@ -1,6 +1,7 @@
 package com.rtsp.client.file.base;
 
 import com.rtsp.client.file.PlaylistFileManager;
+import com.rtsp.client.service.AppInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +14,7 @@ public class PlaylistManager {
 
     private static final Logger log = LoggerFactory.getLogger(PlaylistManager.class);
 
-    private static final String RECENT_PLAYLIST_PATH = System.getProperty("user.dir") + "/src/main/resources/playlist/";
-    private static final String RECENT_PLAYLIST_FILE_PATH = RECENT_PLAYLIST_PATH + "playlist.txt";
-
+    private final String playlistFilePath;
     private final PlaylistFileManager playListFileManager = new PlaylistFileManager();
     private final HashMap<Integer, String> playlistMap;
     private final int playlistMaxSize;
@@ -23,9 +22,15 @@ public class PlaylistManager {
     ////////////////////////////////////////////////////////////////////////////////
 
     public PlaylistManager(int playlistMaxSize) {
+        if (AppInstance.getInstance().isApplicationMode()) {
+            playlistFilePath = "./resources/playlist/playlist.txt";
+        } else {
+            playlistFilePath = System.getProperty("user.dir") + "/src/main/resources/playlist/playlist.txt";
+        }
+
         this.playlistMap = new HashMap<>();
         this.playlistMaxSize = playlistMaxSize;
-        playListFileManager.createPlaylistFile(RECENT_PLAYLIST_FILE_PATH);
+        playListFileManager.createPlaylistFile(playlistFilePath);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -154,6 +159,10 @@ public class PlaylistManager {
     }
 
     ////////////////////////////////////////////////////////////////////////////////
+
+    public String getPlaylistFilePath() {
+        return playlistFilePath;
+    }
 
     public Map<Integer, String> getPlaylistMap() {
         return playlistMap;

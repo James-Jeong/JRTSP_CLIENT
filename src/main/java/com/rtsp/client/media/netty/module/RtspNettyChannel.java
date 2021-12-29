@@ -137,6 +137,8 @@ public class RtspNettyChannel { // > TCP
         if (channel != null) {
             channel.writeAndFlush(request);
             seqNum++;
+
+            logger.debug("({}) Send the request. (\n{})", rtspUnitId, request);
         } else {
             logger.warn("({}) Channel is null. Fail to send the request. ({})", rtspUnitId, request);
         }

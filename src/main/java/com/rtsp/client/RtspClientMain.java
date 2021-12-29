@@ -13,26 +13,30 @@ public class RtspClientMain {
     private static final String TITLE = "JRTSP_CLIENT";
 
     public static void main(String[] args) {
-        if (args.length != 2) {
+        /*if (args.length != 2) {
             logger.error("Argument Error. (&0: RtspClientMain, &1: config_path)");
             return;
-        }
+        }*/
 
-        String configPath = args[1].trim();
-        logger.debug("| Config path: {}", configPath);
-        ConfigManager configManager = new ConfigManager(configPath);
+        String curUserDir = System.getProperty("user.dir");
+        logger.debug("curUserDir: {}", curUserDir);
 
         AppInstance appInstance = AppInstance.getInstance();
-        appInstance.setConfigManager(configManager);
+        String configPath = "./config/user_conf.ini";
+        if (args != null && args.length > 0) {
+            configPath = args[1].trim();
+            logger.debug("| Config path: {}", configPath);
+            appInstance.setApplicationMode(false);
+        }
+        ConfigManager configManager = new ConfigManager(configPath);
 
+        appInstance.setConfigManager(configManager);
 
         GuiManager guiManager = GuiManager.getInstance();
         guiManager.visibleGui(TITLE);
 
-
         ServiceManager serviceManager = ServiceManager.getInstance();
         serviceManager.loop();
-
     }
 
 }

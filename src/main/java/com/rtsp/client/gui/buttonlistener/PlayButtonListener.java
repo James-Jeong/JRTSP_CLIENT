@@ -34,23 +34,33 @@ public class PlayButtonListener implements ActionListener {
             return;
         }
 
-        // GET URI FROM INPUT TEXT
-        String uri = GuiManager.getInstance().getSelectPlaylist();
-        if (uri == null || uri.length() == 0) {
-            uri = GuiManager.getInstance().getUriPanel().getUriTextField().getText();
-            if (uri == null || uri.length() == 0) {
-                logger.warn("Fail to get the URI. Cannot process the play request. (uri=[{}])", uri);
-                return;
-            }
-        }
-
-        GuiManager.getInstance().getVideoControlPanel().setVideoProgressBar(-1.0);
-
         // Send PLAY
         RtspUnit rtspUnit = RtspManager.getInstance().getRtspUnit();
         if (rtspUnit == null) {
             return;
         }
+
+        if (!rtspUnit.isPaused()) {
+            // GET URI FROM INPUT TEXT at the first time of playing
+            String uri = GuiManager.getInstance().getSelectPlaylist();
+            if (uri == null || uri.length() == 0) {
+                uri = GuiManager.getInstance().getUriPanel().getUriTextField().getText();
+                if (uri == null || uri.length() == 0) {
+                    logger.warn("Fail to get the URI. Cannot process the play request. (uri=[{}])", uri);
+                    return;
+                }
+            }
+
+            uri = RtspManager.convertLocalPathToRtspPath(uri);
+            if (uri.contains(" ")) {
+                logger.debug("before uri: {}", uri);
+                uri = uri.replaceAll("\\s", "*");
+                logger.debug("after uri: {}", uri);
+            }
+            rtspUnit.setUri(uri);
+        }
+
+        GuiManager.getInstance().getVideoControlPanel().setVideoProgressBar(-1.0);
 
         StateHandler rtspStateHandler = rtspUnit.getStateManager().getStateHandler(RtspState.NAME);
         RtspNettyChannel rtspNettyChannel = NettyChannelManager.getInstance().getRtspChannel(rtspUnit.getRtspUnitId());
@@ -74,6 +84,7 @@ public class PlayButtonListener implements ActionListener {
                                 rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
                         );
                     }
+                    GuiManager.getInstance().getVideoControlPanel().setVideoProgressBar(0.0);
                 }
             } else {
                 logger.warn("({}) Fail to process PLAY. Media player is null. (prev: PAUSE)", rtspUnit.getRtspUnitId());
@@ -83,10 +94,9 @@ public class PlayButtonListener implements ActionListener {
                             rtspUnit.getStateManager().getStateUnit(rtspUnit.getRtspStateUnitId())
                     );
                 }
+                GuiManager.getInstance().getVideoControlPanel().setVideoProgressBar(0.0);
             }
         } else {
-            rtspUnit.setUri(RtspManager.convertLocalPathToRtspPath(uri));
-
             if (rtspNettyChannel != null) {
                 Random random = new Random();
                 long sessionId = random.nextInt(RtspUnit.MAX_SESSION_ID);
@@ -94,6 +104,7 @@ public class PlayButtonListener implements ActionListener {
                 rtspNettyChannel.sendOptions(rtspUnit);
             } else {
                 logger.warn("({}) Rtsp Channel is closed. Fail to process OPTIONS. (prev: IDLE)", rtspUnit.getRtspUnitId());
+                GuiManager.getInstance().getVideoControlPanel().setVideoProgressBar(0.0);
             }
         }
     }

@@ -5,6 +5,7 @@ import com.rtsp.client.gui.buttonlistener.PauseButtonListener;
 import com.rtsp.client.gui.buttonlistener.PlayButtonListener;
 import com.rtsp.client.gui.buttonlistener.StopButtonListener;
 import com.rtsp.client.gui.buttonlistener.VolumeButtonListener;
+import com.rtsp.client.service.AppInstance;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Group;
@@ -19,22 +20,21 @@ import java.awt.*;
 
 public class VideoControlPanel extends JPanel {
 
-    private static final String IMAGE_PATH = System.getProperty("user.dir") + "/src/main/resources/icon/";
+    private final String iconRootPath;
+    private final ImageIcon playIcon;
+    private final ImageIcon pauseIcon;
+    private final ImageIcon stopIcon;
+    private final ImageIcon volumeIcon;
+    private final ImageIcon muteIcon;
 
-    private final ImageIcon playIcon = new ImageIcon(IMAGE_PATH + "playButton.png");
-    private final ImageIcon pauseIcon = new ImageIcon(IMAGE_PATH + "pauseButton.png");
-    private final ImageIcon stopIcon = new ImageIcon(IMAGE_PATH + "stopButton.png");
-    private final ImageIcon volumeIcon = new ImageIcon(IMAGE_PATH + "volumeButton.png");
-    private final ImageIcon muteIcon = new ImageIcon(IMAGE_PATH + "muteButton.png");
-
-    private final JButton playButton = new JButton(playIcon);
-    private final JButton pauseButton = new JButton(pauseIcon);
-    private final JButton stopButton = new JButton(stopIcon);
+    private final JButton playButton;
+    private final JButton pauseButton;
+    private final JButton stopButton;
 
     private final ProgressBar videoProgressBar = new ProgressBar();
     private final JLabel videoStatus = new JLabel();
 
-    private final JButton volumeButton = new JButton(volumeIcon);
+    private final JButton volumeButton;
     private final Slider volumeSlider = new Slider();
 
     private boolean isMute = false;
@@ -43,9 +43,28 @@ public class VideoControlPanel extends JPanel {
     public VideoControlPanel() {
         this.setLayout(new GridBagLayout());
 
+        if (AppInstance.getInstance().isApplicationMode()) {
+            iconRootPath = "./resources/icon/";
+        } else {
+            iconRootPath = System.getProperty("user.dir") + "/src/main/resources/icon/";
+        }
+
+        playIcon = new ImageIcon(iconRootPath + "playButton.png");
+        playButton = new JButton(playIcon);
+
+        pauseIcon = new ImageIcon(iconRootPath + "pauseButton.png");
+        pauseButton = new JButton(pauseIcon);
+
+        stopIcon = new ImageIcon(iconRootPath + "stopButton.png");
+        stopButton = new JButton(stopIcon);
+
+        volumeIcon = new ImageIcon(iconRootPath + "volumeButton.png");
+        volumeButton = new JButton(volumeIcon);
+
+        muteIcon = new ImageIcon(iconRootPath + "muteButton.png");
+
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.fill = GridBagConstraints.BOTH;
-
         gridBagConstraints.weighty=0.1;
         gridBagConstraints.gridy=0;
 
@@ -185,6 +204,10 @@ public class VideoControlPanel extends JPanel {
             }
 
         });
+    }
+
+    public String getIconRootPath() {
+        return iconRootPath;
     }
 
     public boolean isMute() {

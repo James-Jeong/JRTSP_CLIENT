@@ -115,7 +115,6 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                             rtspUnit.setListenRtpPort(rtpPort);
                             rtspUnit.setListenRtcpPort(rtpPort + 1);
 
-                            // TODO : Need to negotiate remote sdp with local sdp
                             Sdp localSdp = AppInstance.getInstance().getConfigManager().loadLocalSdpConfig(
                                     rtspUnitId,
                                     rtspUnit.getListenRtpPort()

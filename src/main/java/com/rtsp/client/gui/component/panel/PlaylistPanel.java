@@ -17,24 +17,24 @@ public class PlaylistPanel extends JPanel {
     private static final Logger log = LoggerFactory.getLogger(PlaylistPanel.class);
 
     private final PlaylistManager playlistManager;
-
-    private final JLabel playlistName = new JLabel("재생 목록");
-    private final JList playlistView = new JList();
-    private final DefaultListModel model = new DefaultListModel();
-
+    private final JList<String> playlistView = new JList<>();
+    private final DefaultListModel<String> model = new DefaultListModel<>();
     private String selectedUri = null;
 
-    public PlaylistPanel() {
+    ////////////////////////////////////////////////////////////////////////////////
 
+    public PlaylistPanel() {
         BorderLayout borderLayout = new BorderLayout();
         borderLayout.setVgap(3);
         borderLayout.setHgap(3);
         setLayout(borderLayout);
 
         playlistManager = new PlaylistManager(AppInstance.getInstance().getConfigManager().getPlaylistSize());
+        JLabel playlistName = new JLabel("재생 목록");
         playlistName.setHorizontalAlignment(JLabel.CENTER);
         playlistName.setPreferredSize(new Dimension(this.getWidth(), 20));
         this.add(playlistName, BorderLayout.NORTH);
+
         initPlaylistView();
         loadPlaylist();
     }
@@ -46,11 +46,19 @@ public class PlaylistPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    // TODO : 창 하나 조그만거 띄워서 삭제 > 삭제 버튼 (remove)
                     int index = playlistView.locationToIndex(e.getPoint());
                     playlistView.setSelectedIndex(index);
-                    selectedUri = (String) model.get(index);
-                    int isDelete = JOptionPane.showOptionDialog(null, selectedUri, "URI Delete", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"YES", "NO"}, "YES");
+                    selectedUri = model.get(index);
+                    int isDelete = JOptionPane.showOptionDialog(
+                            null,
+                            selectedUri,
+                            "URI Delete",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE,
+                            null,
+                            new String[]{"YES", "NO"},
+                            "YES"
+                    );
 
                     if (isDelete == 0) {
                         removePlaylist(selectedUri);
@@ -58,7 +66,7 @@ public class PlaylistPanel extends JPanel {
                 } else {
                     int index = playlistView.locationToIndex(e.getPoint());
                     playlistView.setSelectedIndex(index);
-                    selectedUri = (String) model.get(index);
+                    selectedUri = model.get(index);
 
                     selectPlaylist();
                 }
@@ -68,10 +76,12 @@ public class PlaylistPanel extends JPanel {
         this.add(new JScrollPane(playlistView), BorderLayout.CENTER);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+
     private void loadPlaylist() {
         HashMap<Integer, String> playlist = (HashMap<Integer, String>) playlistManager.startPlaylist();
         if (!playlist.isEmpty()) {
-            playlist.forEach((key, value) -> model.add(key, value));
+            playlist.forEach(model::add);
         }
     }
 
@@ -82,18 +92,20 @@ public class PlaylistPanel extends JPanel {
     public void addPlaylist(int index, String uri) {
         playlistManager.addPlaylist(index, uri);
         model.clear();
-        playlistManager.getPlaylistMap().forEach((key, value) -> model.add(key, value));
+        playlistManager.getPlaylistMap().forEach(model::add);
     }
 
     public void removePlaylist(String uri) {
         playlistManager.removePlaylist(uri);
         model.clear();
-        playlistManager.getPlaylistMap().forEach((key, value) -> model.add(key, value));
+        playlistManager.getPlaylistMap().forEach(model::add);
     }
 
     public void selectPlaylist() {
         GuiManager.getInstance().getUriPanel().getUriTextField().setText(selectedUri);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     public String getSelectedUri() {
         return selectedUri;
