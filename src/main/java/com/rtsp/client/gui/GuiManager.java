@@ -1,6 +1,7 @@
 package com.rtsp.client.gui;
 
 import com.rtsp.client.gui.component.ClientFrame;
+import com.rtsp.client.gui.component.TextEditor;
 import com.rtsp.client.gui.component.panel.*;
 
 import java.awt.*;
@@ -15,7 +16,8 @@ public class GuiManager {
     private final PlaylistPanel playlistPanel;
     private final UriPanel uriPanel;
 
-    private ClientFrame clientFrame;
+    private ClientFrame clientFrame = null;
+    private final TextEditor textEditor;
 
     private boolean isUploaded = false;
 
@@ -28,6 +30,7 @@ public class GuiManager {
         controlPanel = new ControlPanel();
         playlistPanel = new PlaylistPanel();
         uriPanel = new UriPanel();
+        textEditor = new TextEditor();
     }
 
     public static GuiManager getInstance() {
@@ -36,6 +39,10 @@ public class GuiManager {
         }
 
         return guiManager;
+    }
+
+    public TextEditor getTextEditor() {
+        return textEditor;
     }
 
     public boolean isUploaded() {

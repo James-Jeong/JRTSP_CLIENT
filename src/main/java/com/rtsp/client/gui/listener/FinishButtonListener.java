@@ -1,4 +1,4 @@
-package com.rtsp.client.gui.buttonlistener;
+package com.rtsp.client.gui.listener;
 
 import com.rtsp.client.config.ConfigManager;
 import com.rtsp.client.media.netty.NettyChannelManager;

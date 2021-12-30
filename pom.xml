@@ -4,11 +4,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.rtsp_client</groupId>
-    <artifactId>rtsp_client</artifactId>
+    <groupId>org.jrtsp_client</groupId>
+    <artifactId>jrtsp_client</artifactId>
     <version>1.0.0</version>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <rpm.release.version>0</rpm.release.version>
+        <rpm.binary.dir>target/rpm/${project.artifactId}/RPMS/noarch</rpm.binary.dir>
+        <rpm.binary.name>${project.artifactId}-${project.version}-${rpm.release.version}.noarch.rpm</rpm.binary.name>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
@@ -141,5 +145,177 @@
             </snapshots>
         </repository>
     </repositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.0-beta-3</version>
+                <configuration>
+                    <buildNumberPropertyName>buildNumber</buildNumberPropertyName>
+                    <format>{0,date,yyyy/MM/dd}</format>
+                    <items>
+                        <item>timestamp</item>
+                    </items>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>lib</outputDirectory>
+                            <includeScope>compile</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <compilerArgument>-Xlint:all</compilerArgument>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>rpm-maven-plugin</artifactId>
+                <version>2.0.1</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>rpm</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <copyright>2021, UANGEL, JAMESJ</copyright>
+                    <group>Simulator</group>
+                    <description>jrtsp_client</description>
+                    <release>${rpm.release.version}</release>
+                    <autoRequires>false</autoRequires>
+                    <targetOS>darwin</targetOS>
+                    <defaultDirmode>755</defaultDirmode>
+                    <defaultFilemode>644</defaultFilemode>
+                    <defaultUsername>root</defaultUsername>
+                    <defaultGroupname>wheel</defaultGroupname>
+                    <mappings>
+                        <mapping>
+                            <directory>/Users/jrtsp_client/</directory>
+                        </mapping>
+
+                        <mapping>
+                            <directory>/Users/jrtsp_client/lib/</directory>
+                            <filemode>755</filemode>
+                        </mapping>
+                        <mapping>
+                            <directory>/Users/jrtsp_client/lib/</directory>
+                            <directoryIncluded>false</directoryIncluded>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/out/artifacts/rtsp_client_jar/rtsp_client.jar</location>
+                                </source>
+                            </sources>
+                        </mapping>
+
+                        <mapping>
+                            <directory>/Users/jrtsp_client/bin/</directory>
+                            <filemode>755</filemode>
+                        </mapping>
+                        <mapping>
+                            <directory>/Users/jrtsp_client/bin/</directory>
+                            <filemode>755</filemode>
+                            <directoryIncluded>false</directoryIncluded>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/bin/run.sh</location>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <mapping>
+                            <configuration>noreplace</configuration>
+                            <directory>/Users/jrtsp_client/config/</directory>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/config/user_conf.ini</location>
+                                </source>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/config/logback.xml</location>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <mapping>
+                            <directory>/Users/jrtsp_client/logs/</directory>
+                            <filemode>755</filemode>
+                        </mapping>
+                        <mapping>
+                            <directory>/Users/jrtsp_client/icon/</directory>
+                            <filemode>755</filemode>
+                        </mapping>
+                        <mapping>
+                            <directory>/Users/jrtsp_client/icon/</directory>
+                            <filemode>755</filemode>
+                            <directoryIncluded>false</directoryIncluded>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/icon/muteButton.png</location>
+                                </source>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/icon/pauseButton.png</location>
+                                </source>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/icon/playButton.png</location>
+                                </source>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/icon/stopButton.png</location>
+                                </source>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/icon/volumeButton.png</location>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <mapping>
+                            <directory>/Users/jrtsp_client/playlist/</directory>
+                            <filemode>755</filemode>
+                        </mapping>
+                        <mapping>
+                            <directory>/Users/jrtsp_client/playlist/</directory>
+                            <filemode>755</filemode>
+                            <directoryIncluded>false</directoryIncluded>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/playlist/playlist.txt</location>
+                                </source>
+                            </sources>
+                        </mapping>
+                    </mappings>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
 
 </project>

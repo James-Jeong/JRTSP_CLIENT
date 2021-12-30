@@ -29,6 +29,8 @@ public class ConfigManager {
     private static final String SECTION_SDP = "SDP"; // SDP Section 이름
 
     // SECTION_COMMON Field String
+    private static final String FIELD_ICON_ROOT_PATH = "ICON_ROOT_PATH";
+    private static final String FIELD_PLAYLIST_ROOT_PATH = "PLAYLIST_ROOT_PATH";
     private static final String FIELD_SEND_BUF_SIZE = "SEND_BUF_SIZE";
     private static final String FIELD_RECV_BUF_SIZE = "RECV_BUF_SIZE";
     private static final String FIELD_PLAYLIST_SIZE = "PLAYLIST_SIZE";
@@ -61,6 +63,8 @@ public class ConfigManager {
     private static final String FIELD_HASH_KEY = "HASH_KEY";
 
     // COMMON
+    private String iconRootPath;
+    private String playlistRootPath;
     private int sendBufSize;
     private int recvBufSize;
     private int playlistSize;
@@ -114,7 +118,7 @@ public class ConfigManager {
         File iniFile = new File(configPath);
         if (!iniFile.isFile() || !iniFile.exists()) {
             logger.warn("Not found the config path. (path={})", configPath);
-            return;
+            System.exit(1);
         }
 
         try {
@@ -140,6 +144,18 @@ public class ConfigManager {
      * @brief COMMON Section 을 로드하는 함수
      */
     private void loadCommonConfig() {
+        iconRootPath = getIniValue(SECTION_COMMON, FIELD_ICON_ROOT_PATH);
+        if (iconRootPath == null) {
+            logger.warn("Fail to load the [{}-{}].", SECTION_COMMON, FIELD_ICON_ROOT_PATH);
+            System.exit(1);
+        }
+
+        playlistRootPath = getIniValue(SECTION_COMMON, FIELD_PLAYLIST_ROOT_PATH);
+        if (playlistRootPath == null) {
+            logger.warn("Fail to load the [{}-{}].", SECTION_COMMON, FIELD_PLAYLIST_ROOT_PATH);
+            System.exit(1);
+        }
+
         sendBufSize = Integer.parseInt(getIniValue(SECTION_COMMON, FIELD_SEND_BUF_SIZE));
         if (sendBufSize <= 0) {
             sendBufSize = 33554432;
@@ -165,17 +181,20 @@ public class ConfigManager {
     private void loadFfmpegConfig() {
         this.ffmpegPath = getIniValue(SECTION_FFMPEG, FIELD_FFMPEG_PATH);
         if (this.ffmpegPath == null) {
-            return;
+            logger.warn("Fail to load the [{}-{}].", SECTION_FFMPEG, FIELD_FFMPEG_PATH);
+            System.exit(1);
         }
 
         this.ffprobePath = getIniValue(SECTION_FFMPEG, FIELD_FFPROBE_PATH);
         if (this.ffprobePath == null) {
-            return;
+            logger.warn("Fail to load the [{}-{}].", SECTION_FFMPEG, FIELD_FFPROBE_PATH);
+            System.exit(1);
         }
 
         this.tempRootPath = getIniValue(SECTION_FFMPEG, FIELD_TEMP_ROOT_PATH);
         if (this.tempRootPath == null) {
-            return;
+            logger.warn("Fail to load the [{}-{}].", SECTION_FFMPEG, FIELD_TEMP_ROOT_PATH);
+            System.exit(1);
         }
 
         this.deleteM3u8 = Boolean.parseBoolean(getIniValue(SECTION_FFMPEG, FIELD_DELETE_M3U8));
@@ -427,6 +446,14 @@ public class ConfigManager {
     }
 
     ////////////////////////////////////////////////////////////////////////////////
+
+    public String getIconRootPath() {
+        return iconRootPath;
+    }
+
+    public String getPlaylistRootPath() {
+        return playlistRootPath;
+    }
 
     public int getLocalRtspPort() {
         return localRtspPort;

@@ -7,7 +7,6 @@ public class AppInstance {
     private static AppInstance instance = null;
 
     private int instanceId = 0;
-    private boolean isApplicationMode = true;
 
     private String configPath = null;
     private ConfigManager configManager = null;
@@ -29,14 +28,6 @@ public class AppInstance {
     }
 
     ////////////////////////////////////////////////////////////////////////////////
-
-    public boolean isApplicationMode() {
-        return isApplicationMode;
-    }
-
-    public void setApplicationMode(boolean applicationMode) {
-        isApplicationMode = applicationMode;
-    }
 
     public int getInstanceId ( ) {
         return instanceId;

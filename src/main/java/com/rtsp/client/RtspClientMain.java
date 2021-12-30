@@ -10,27 +10,20 @@ import org.slf4j.LoggerFactory;
 public class RtspClientMain {
 
     private static final Logger logger = LoggerFactory.getLogger(RtspClientMain.class);
-    private static final String TITLE = "JRTSP_CLIENT";
+    private static final String TITLE = "UMEDIA_RTSP_CLIENT";
 
     public static void main(String[] args) {
-        /*if (args.length != 2) {
+        if (args.length != 2) {
             logger.error("Argument Error. (&0: RtspClientMain, &1: config_path)");
             return;
-        }*/
-
-        String curUserDir = System.getProperty("user.dir");
-        logger.debug("curUserDir: {}", curUserDir);
-
-        AppInstance appInstance = AppInstance.getInstance();
-        String configPath = "./config/user_conf.ini";
-        if (args != null && args.length > 0) {
-            configPath = args[1].trim();
-            logger.debug("| Config path: {}", configPath);
-            appInstance.setApplicationMode(false);
         }
+
+        String configPath = args[1].trim();
+        logger.debug("| Config path: {}", configPath);
         ConfigManager configManager = new ConfigManager(configPath);
 
-        appInstance.setConfigManager(configManager);
+        AppInstance.getInstance().setConfigPath(configPath);
+        AppInstance.getInstance().setConfigManager(configManager);
 
         GuiManager guiManager = GuiManager.getInstance();
         guiManager.visibleGui(TITLE);

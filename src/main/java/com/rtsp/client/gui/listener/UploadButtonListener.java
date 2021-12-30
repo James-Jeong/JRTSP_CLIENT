@@ -1,4 +1,4 @@
-package com.rtsp.client.gui.buttonlistener;
+package com.rtsp.client.gui.listener;
 
 import com.rtsp.client.gui.GuiManager;
 

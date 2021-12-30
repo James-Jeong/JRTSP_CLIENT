@@ -1,10 +1,10 @@
 package com.rtsp.client.gui.component.panel;
 
 import com.rtsp.client.gui.GuiManager;
-import com.rtsp.client.gui.buttonlistener.PauseButtonListener;
-import com.rtsp.client.gui.buttonlistener.PlayButtonListener;
-import com.rtsp.client.gui.buttonlistener.StopButtonListener;
-import com.rtsp.client.gui.buttonlistener.VolumeButtonListener;
+import com.rtsp.client.gui.listener.PauseButtonListener;
+import com.rtsp.client.gui.listener.PlayButtonListener;
+import com.rtsp.client.gui.listener.StopButtonListener;
+import com.rtsp.client.gui.listener.VolumeButtonListener;
 import com.rtsp.client.service.AppInstance;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -17,6 +17,7 @@ import javafx.util.Duration;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 public class VideoControlPanel extends JPanel {
 
@@ -43,11 +44,16 @@ public class VideoControlPanel extends JPanel {
     public VideoControlPanel() {
         this.setLayout(new GridBagLayout());
 
-        if (AppInstance.getInstance().isApplicationMode()) {
-            iconRootPath = "./resources/icon/";
-        } else {
-            iconRootPath = System.getProperty("user.dir") + "/src/main/resources/icon/";
+        String curIconRootPath = AppInstance.getInstance().getConfigManager().getIconRootPath();
+        if (!curIconRootPath.startsWith("/")) {
+            String curUserDir = System.getProperty("user.dir");
+            curIconRootPath = curUserDir + File.separator + curIconRootPath;
         }
+        if (!curIconRootPath.endsWith(File.separator)) {
+            curIconRootPath += File.separator;
+        }
+
+        iconRootPath = curIconRootPath;
 
         playIcon = new ImageIcon(iconRootPath + "playButton.png");
         playButton = new JButton(playIcon);

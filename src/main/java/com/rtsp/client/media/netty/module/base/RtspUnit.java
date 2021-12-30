@@ -328,35 +328,39 @@ public class RtspUnit {
         }
 
         if (configManager.isDeleteMp4()) {
-            File mp4File = new File(mp4FilePath);
-            if (mp4File.exists()) {
-                if (mp4File.delete()) {
-                    logger.debug("({}) Success to delete the mp4 file. (path={})", rtspUnitId, mp4FilePath);
+            if (mp4FilePath != null) {
+                File mp4File = new File(mp4FilePath);
+                if (mp4File.exists()) {
+                    if (mp4File.delete()) {
+                        logger.debug("({}) Success to delete the mp4 file. (path={})", rtspUnitId, mp4FilePath);
+                    }
                 }
             }
         }
 
-        File tempRootPathDirectory = new File(tempFileRootPath);
-        if (configManager.isDeleteM3u8() && configManager.isDeleteTs() && configManager.isDeleteMp4()) {
-            if (tempRootPathDirectory.exists()) {
+        if (tempFileRootPath != null) {
+            File tempRootPathDirectory = new File(tempFileRootPath);
+            if (configManager.isDeleteM3u8() && configManager.isDeleteTs() && configManager.isDeleteMp4()) {
+                if (tempRootPathDirectory.exists()) {
+                    if (tempRootPathDirectory.delete()) {
+                        logger.debug("({}) The temp root directory is deleted. (path={})", rtspUnitId, tempFileRootPath);
+                    }
+                }
+            }
+
+            File[] deleteFolderList = tempRootPathDirectory.listFiles();
+            if (deleteFolderList != null) {
+                for (File file : deleteFolderList) {
+                    if (file.delete()) {
+                        logger.debug("({}) The temp file is deleted. (path={})", rtspUnitId, file.getAbsolutePath());
+                    }
+                }
+            }
+
+            if (deleteFolderList == null || deleteFolderList.length == 0) {
                 if (tempRootPathDirectory.delete()) {
                     logger.debug("({}) The temp root directory is deleted. (path={})", rtspUnitId, tempFileRootPath);
                 }
-            }
-        }
-
-        File[] deleteFolderList = tempRootPathDirectory.listFiles();
-        if (deleteFolderList != null) {
-            for (File file : deleteFolderList) {
-                if (file.delete()) {
-                    logger.debug("({}) The temp file is deleted. (path={})", rtspUnitId, file.getAbsolutePath());
-                }
-            }
-        }
-
-        if (deleteFolderList == null || deleteFolderList.length == 0) {
-            if (tempRootPathDirectory.delete()) {
-                logger.debug("({}) The temp root directory is deleted. (path={})", rtspUnitId, tempFileRootPath);
             }
         }
     }

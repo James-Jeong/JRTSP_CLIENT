@@ -1,11 +1,11 @@
-package com.rtsp.client.gui.buttonlistener;
+package com.rtsp.client.gui.listener;
 
 import com.rtsp.client.gui.GuiManager;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class addPlaylistButtonListener implements ActionListener {
+public class PlaylistAddButtonListener implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
