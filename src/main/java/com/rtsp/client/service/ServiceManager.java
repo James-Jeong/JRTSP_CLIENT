@@ -1,7 +1,9 @@
 package com.rtsp.client.service;
 
+import com.rtsp.client.config.ConfigManager;
 import com.rtsp.client.gui.GuiManager;
 import com.rtsp.client.media.netty.NettyChannelManager;
+import com.rtsp.client.service.scheduler.schedule.ScheduleManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +13,7 @@ public class ServiceManager {
 
     private static final Logger logger = LoggerFactory.getLogger(ServiceManager.class);
 
+    public static final String MAIN_SCHEDULE_JOB = "MAIN";
     private static ServiceManager serviceManager = null;
     private static final int DELAY = 1000;
     private boolean isQuit = false;
@@ -30,10 +33,19 @@ public class ServiceManager {
         return serviceManager;
     }
 
-
     ////////////////////////////////////////////////////////////////////////////////
 
     private void start() {
+        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+        if (ScheduleManager.getInstance().initJob(MAIN_SCHEDULE_JOB, configManager.getStreamThreadPoolSize(), configManager.getStreamThreadPoolSize() * 2)) {
+            ScheduleManager.getInstance().startJob(MAIN_SCHEDULE_JOB,
+                    new HaHandler(HaHandler.class.getSimpleName(),
+                            0, DELAY, TimeUnit.MILLISECONDS,
+                            5, 0, true
+                    )
+            );
+        }
+
         logger.debug("| All services are opened.");
 
         // Add register channel
