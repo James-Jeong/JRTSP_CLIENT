@@ -230,7 +230,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                         logger.debug("({}) ({}) () < SETUP {}", name, rtspUnit.getRtspUnitId(), res);
 
                         if (res.status().code() == HttpResponseStatus.OK.code()) {
-                            String transportValue = res.headers().get("Transport");
+                            String transportValue = res.headers().get(RtspHeaderNames.TRANSPORT);
                             if (transportValue != null) {
                                 // SSRC Parsing
                                 int ssrcIndex = transportValue.indexOf("ssrc");
@@ -275,13 +275,13 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                             rtspUnit.setPaused(false);
 
                             String range = res.headers().get(RtspHeaderNames.RANGE);
-                            logger.debug("({}) ({}) range: {}", name, rtspUnit.getRtspUnitId(), range);
+                            logger.debug("({}) ({}) Range: {}", name, rtspUnit.getRtspUnitId(), range);
                             String startTime = range.substring(range.indexOf("npt") + 4, range.indexOf("-"));
-                            logger.debug("({}) ({}) startTime: {}", name, rtspUnit.getRtspUnitId(), startTime);
+                            logger.debug("({}) ({}) StartTime: {}", name, rtspUnit.getRtspUnitId(), startTime);
                             String endTime = null;
                             if (range.charAt(range.length() - 1) != '-') { // end time
                                 endTime = range.substring(range.indexOf("-") + 1);
-                                logger.debug("({}) ({}) endTime: {}", name, rtspUnit.getRtspUnitId(), endTime);
+                                logger.debug("({}) ({}) EndTime: {}", name, rtspUnit.getRtspUnitId(), endTime);
                             }
                             rtspUnit.setStartTime(Double.parseDouble(startTime));
                             if (endTime != null) {
@@ -334,8 +334,8 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                         logger.debug("({}) ({}) () < TEARDOWN {}", name, rtspUnit.getRtspUnitId(), res);
                         if (res.status().code() == HttpResponseStatus.OK.code()) {
                             VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
-                            videoControlPanel.setVideoProgressBar(1.0);
                             videoControlPanel.setVideoProgressBar(0.0);
+                            videoControlPanel.setVideoStatus(0, 0);
 
                             MediaPlayer mediaPlayer = GuiManager.getInstance().getVideoPanel().getMediaPlayer();
                             if (mediaPlayer != null) {

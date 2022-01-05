@@ -89,7 +89,7 @@ public class RtspRegisterNettyChannel {
             listenChannel = channelFuture.channel();
             log.debug("Success to start the rtsp register listen channel. (ip={}, port={})", ip, port);
         } catch (Exception e) {
-            log.warn("Fail to start the rtsp register listen channel. (ip={}, port={})", ip, port);
+            log.warn("Fail to start the rtsp register listen channel. (ip={}, port={})", ip, port, e);
             Thread.currentThread().interrupt();
         }
     }

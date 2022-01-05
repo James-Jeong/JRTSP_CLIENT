@@ -23,7 +23,6 @@ public class StopButtonListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (GuiManager.getInstance().isUploaded()) {
             VideoControlPanel videoControlPanel = GuiManager.getInstance().getVideoControlPanel();
-            videoControlPanel.setVideoProgressBar(1.0);
             videoControlPanel.setVideoProgressBar(0.0);
 
             GuiManager.getInstance().getVideoPanel().getMediaPlayer().stop();

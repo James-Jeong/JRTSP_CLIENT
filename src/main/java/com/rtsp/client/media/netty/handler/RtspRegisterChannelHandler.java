@@ -105,6 +105,8 @@ public class RtspRegisterChannelHandler extends SimpleChannelInboundHandler<Data
                             nonce
                     );
                     rtspUnit.setRegistered(false);
+                } else {
+                    logger.warn("({}) Fail to register the rtspUnit. (code={})", rtspUnit.getRtspUnitId(), status);
                 }
             } else if (uRtspHeader.getMessageType() == URtspMessageType.UNREGISTER) {
                 UnRegisterRtspUnitRes unRegisterRtspUnitRes = new UnRegisterRtspUnitRes(data);
@@ -114,9 +116,9 @@ public class RtspRegisterChannelHandler extends SimpleChannelInboundHandler<Data
                 if (status == UnRegisterRtspUnitRes.SUCCESS) { // OK
                     GuiManager.getInstance().getControlPanel().initButtonStatus();
                     RtspManager.getInstance().closeRtspUnit();
-                } else if (status == UnRegisterRtspUnitRes.NOT_ACCEPTED) { // NOT AUTHORIZED
+                } else {
                     RtspUnit rtspUnit = RtspManager.getInstance().getRtspUnit();
-                    logger.warn("({}) Fail to unregister the rtspUnit.", rtspUnit.getRtspUnitId());
+                    logger.warn("({}) Fail to unregister the rtspUnit. (code={})", rtspUnit.getRtspUnitId(), status);
                 }
             }
         } catch (Exception e) {

@@ -122,7 +122,10 @@ public class TextEditor extends JFrame implements ActionListener {
         //
 
         frame.setJMenuBar(mb);
-        frame.add(editArea);
+
+        JScrollPane scrollPane = new JScrollPane(editArea);
+        frame.add(scrollPane);
+
         frame.setSize(500, 500);
     }
 
@@ -233,31 +236,29 @@ public class TextEditor extends JFrame implements ActionListener {
                     // Set the label to the path of the selected directory
                     //File fi = new File(j.getSelectedFile().getAbsolutePath());
 
-                    try {
-                        // String
-                        String s1 = "";
-                        StringBuilder sl = new StringBuilder();
-
-                        // File reader
-                        //FileReader fr = new FileReader(fi);
-                        FileReader fr = new FileReader(configFile);
-
-                        // Buffered reader
-                        BufferedReader br = new BufferedReader(fr);
-
-                        // Initialize sl
-                        sl = new StringBuilder(br.readLine());
-
-                        // Take the input from the file
-                        while ((s1 = br.readLine()) != null) {
-                            sl.append("\n").append(s1);
-                        }
-
-                        // Set the text
-                        editArea.setText(sl.toString());
-                    } catch (Exception evt) {
-                        JOptionPane.showMessageDialog(frame, evt.getMessage());
+                String text = editArea.getText();
+                if (text.length() > 0) {
+                    int result = JOptionPane.showConfirmDialog(null, "정말 다시 로드하시겠습니까?", "Open", JOptionPane.YES_NO_OPTION);
+                    if (result != JOptionPane.YES_OPTION) {
+                        return;
                     }
+                }
+
+                try {
+                    FileReader fr = new FileReader(configFile);
+                    BufferedReader br = new BufferedReader(fr);
+                    StringBuilder sl = new StringBuilder(br.readLine());
+
+                    // Take the input from the file
+                    String s1;
+                    while ((s1 = br.readLine()) != null) {
+                        sl.append("\n").append(s1);
+                    }
+
+                    editArea.setText(sl.toString());
+                } catch (Exception evt) {
+                    JOptionPane.showMessageDialog(frame, evt.getMessage());
+                }
                 //}
                 // If the user cancelled the operation
                 //else

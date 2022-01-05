@@ -16,6 +16,7 @@ public class UnRegisterRtspUnitRes extends URtspMessage {
 
     public static final int SUCCESS = 200;
     public static final int NOT_ACCEPTED = 400;
+    public static final int STATE_ERROR = 402;
 
     private final URtspHeader uRtspHeader;
 
