@@ -7,6 +7,7 @@ import com.rtsp.client.gui.GuiManager;
 import com.rtsp.client.media.netty.module.RtspManager;
 import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.service.AppInstance;
+import com.rtsp.client.service.ServiceManager;
 import com.rtsp.client.service.scheduler.job.Job;
 import com.rtsp.client.service.scheduler.schedule.ScheduleManager;
 import io.lindstrom.m3u8.model.MediaPlaylist;
@@ -126,7 +127,7 @@ public class StreamReceiver extends Job {
                         GuiManager.getInstance().getVideoPanel().getMediaPlayer().play();
                         fileManager.resetTsFileIndex();
                         rtspUnit.setMediaSegmentList(null);
-                        ScheduleManager.getInstance().stopJob(RtspUnit.VIDEO_JOB_KEY, this);
+                        ServiceManager.getInstance().getScheduleManager().stopJob(RtspUnit.VIDEO_JOB_KEY, this);
                         return;
                     }
                 }

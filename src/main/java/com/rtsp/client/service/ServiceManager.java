@@ -14,7 +14,10 @@ public class ServiceManager {
     private static final Logger logger = LoggerFactory.getLogger(ServiceManager.class);
 
     public static final String MAIN_SCHEDULE_JOB = "MAIN";
+
     private static ServiceManager serviceManager = null;
+    private final ScheduleManager scheduleManager = new ScheduleManager();
+
     private static final int DELAY = 1000;
     private boolean isQuit = false;
 
@@ -37,8 +40,8 @@ public class ServiceManager {
 
     private void start() {
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-        if (ScheduleManager.getInstance().initJob(MAIN_SCHEDULE_JOB, configManager.getStreamThreadPoolSize(), configManager.getStreamThreadPoolSize() * 2)) {
-            ScheduleManager.getInstance().startJob(MAIN_SCHEDULE_JOB,
+        if (scheduleManager.initJob(MAIN_SCHEDULE_JOB, configManager.getStreamThreadPoolSize(), configManager.getStreamThreadPoolSize() * 2)) {
+            scheduleManager.startJob(MAIN_SCHEDULE_JOB,
                     new HaHandler(HaHandler.class.getSimpleName(),
                             0, DELAY, TimeUnit.MILLISECONDS,
                             5, 0, true
@@ -53,6 +56,7 @@ public class ServiceManager {
     }
 
     public void stop() {
+        scheduleManager.stopAll(MAIN_SCHEDULE_JOB);
 
         GuiManager.getInstance().getPlaylistPanel().savePlaylist();
         // Remove register channel
@@ -79,6 +83,9 @@ public class ServiceManager {
         }
     }
 
+    public ScheduleManager getScheduleManager() {
+        return scheduleManager;
+    }
     ////////////////////////////////////////////////////////////////////////////////
 
     /**

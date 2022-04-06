@@ -14,6 +14,7 @@ import com.rtsp.client.media.netty.module.base.RtspUnit;
 import com.rtsp.client.media.sdp.base.Sdp;
 import com.rtsp.client.media.sdp.base.attribute.RtpAttribute;
 import com.rtsp.client.service.AppInstance;
+import com.rtsp.client.service.ServiceManager;
 import com.rtsp.client.service.scheduler.schedule.ScheduleManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -56,7 +57,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
         this.listenRtspPort = listenRtspPort;
 
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-        ScheduleManager.getInstance().initJob(
+        ServiceManager.getInstance().getScheduleManager().initJob(
                 "VIDEO_PLAY",
                 configManager.getStreamThreadPoolSize(),
                 configManager.getStreamThreadPoolSize()
@@ -289,7 +290,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                             }
 
                             GuiManager.getInstance().getControlPanel().applyPlayButtonStatus();
-                            ScheduleManager.getInstance().startJob(RtspUnit.VIDEO_JOB_KEY, videoPlayJob);
+                            ServiceManager.getInstance().getScheduleManager().startJob(RtspUnit.VIDEO_JOB_KEY, videoPlayJob);
 
                             logger.debug("({}) ({}) () Success to process PLAY.", name, rtspUnit.getRtspUnitId());
                         } else {
@@ -345,7 +346,7 @@ public class RtspChannelInboundHandler extends ChannelInboundHandlerAdapter {
                                 GuiManager.getInstance().getVideoPanel().initMediaView();
                             }
 
-                            ScheduleManager.getInstance().stopJob(RtspUnit.VIDEO_JOB_KEY, videoPlayJob);
+                            ServiceManager.getInstance().getScheduleManager().stopJob(RtspUnit.VIDEO_JOB_KEY, videoPlayJob);
 
                             GuiManager.getInstance().getControlPanel().applyStopButtonStatus();
                             RtspManager.getInstance().clearRtspUnit(true, false);
